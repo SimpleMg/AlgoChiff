@@ -1,14 +1,53 @@
-
-class Encrypt:
+class chiff:
     def __init__(self, KEY, message):
-        self.key = Key(KEY)
-        self.message = self.splitMessage(message)
-        self.key.keyBase = self.key.deriveKeys(self.key.KEY, 4)
-        self.key.keys[0] = self.key.deriveKeys(self.key.keyBase[0], 5)
-        self.key.keys[1] = self.key.deriveKeys(self.key.keyBase[1], 16)
-        self.key.keys[2] = self.key.deriveKeys(self.key.keyBase[2], 5)
-        self.key.keys[3] = self.key.deriveKeys(self.key.keyBase[3], 2)
+        self.key = KEY
+        self.message = message
 
 
-    def splitMessage(self, bits) -> list:
-        pass
+    def chiffrementCesar(self, decalage):
+        resultat = ""
+        for char in self.message:
+            if char.isalpha():
+                asciiOffset = 65 if char.isupper() else 97
+                resultat += chr((ord(char) - asciiOffset + decalage) % 26 + asciiOffset)
+            else:
+                resultat += char
+        return resultat
+
+
+    def chiffrementVigenere(self):
+        resultat = ""
+        lenK = len(self.key)
+        for char in range(len(self.message)):
+            if self.message[char].isalpha():
+                asciiOffset = 65 if self.message[char].isupper() else 97
+                resultat += chr(((ord(self.message[char]) - asciiOffset) + (ord(self.key[char % lenK]) - asciiOffset)) % 26 + asciiOffset)
+            else:
+                resultat += self.message[char]
+        return resultat
+    
+
+    def xorOperator(self, a, b):
+        aBinary = format(a, 'b')
+        bBinary = format(b, 'b')
+        maxL = max(len(aBinary), len(bBinary))
+        aBinary = aBinary.zfill(maxL)
+        bBinary = bBinary.zfill(maxL)
+        resultat = ""
+        for i in range(maxL):
+            bit = '1' if aBinary[i] != bBinary[i] else '0'
+            resultat += bit
+        return int(resultat, 2)
+        
+
+    def chiffrementXOR(self):
+        resultat = ""
+        keyLength = len(self.key)
+        for i in range(len(self.message)):
+            # resultat += chr(ord(text[i]) ^ ord(key[i % keyLength]))
+            resultat += chr(self.xorOperator(ord(self.message[i]), ord(self.key[i % keyLength])))
+        return resultat
+
+
+
+
