@@ -18,10 +18,11 @@ class Encrypt:
         self.initialisationVector()
         self.initialisationKeys()
         self.layer(0)
+        #self.mainLoop()
     
-    def splitMessage(self, bits) -> list:
-
-        return [self.func.intToHex(self.func.stringToInt('Je m"appelle Minh')), self.func.intToHex(self.func.stringToInt('Je m"appelle MArtin')), self.func.intToHex(self.func.stringToInt('Je m"appelle Vecteur')), self.func.intToHex(self.func.stringToInt('Je m"appelle Zeo'))]
+    def splitMessage(self, message) -> list:
+        hexa = self.func.intToHex(self.func.stringToInt(message))
+        return [hexa[i:i+32] for i in range(0, len(hexa), 32)]
 
     def initialisationKeys(self):
         self.key.keyBase = self.key.deriveKeys(self.key.KEY, 4)
@@ -40,7 +41,6 @@ class Encrypt:
                 self.message[i] = self.func.xor(key[0], self.message[i])
                 self.message[i] = self.func.funcKey[j%len(self.func.funcKey)](self.message[i], key[1])
                 self.message[i] = self.func.xor(key[2], self.message[i])
-
         print("Résultat Chiffrement",self.message)
         b = Decrypt("ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff", self.message)
     
@@ -53,6 +53,10 @@ class Encrypt:
                 for k in range(5):
                     self.message[i] = self.func.func[self.vecInit[0][j*5 + k + i * 16 * 5]](self.message[i])
                 self.message[i] = self.func.funcKey[self.vecInit[1][i]](self.message[i], key[1])
+                self.message[i] = self.func.xor(key[2], self.message[i])
+        
+        print("Résultat Chiffrement",self.message)
+        #b = Decrypt("ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff", self.message)
     
     def adaptationKey(self, message, key):
         if len(key) == len(message):
@@ -87,6 +91,17 @@ class Decrypt:
     def mainLoop(self):
         self.key.keys[1] = self.key.deriveKeys(self.key.keyBase[1], 16 * len(self.message))
     
+    def mainLoop(self):
+        self.key.keys[1] = self.key.deriveKeys(self.key.keyBase[1], 16 * len(self.message))
+        for i in range(len(self.message)):
+            for j in range(16):
+                key = self.key.deriveKeys(self.key.keys[1][j], 3)
+                self.message[i] = self.func.xor(key[0], self.message[i])
+                for k in range(5):
+                    self.message[i] = self.func.func[self.vecInit[0][j*5 + k + i * 16 * 5]](self.message[i])
+                self.message[i] = self.func.funcKey[self.vecInit[1][i]](self.message[i], key[1])
+                self.message[i] = self.func.xor(key[2], self.message[i])
+
     def adaptationKey(self, message, key):
         if len(key) == len(message):
             return key
@@ -98,8 +113,7 @@ class Decrypt:
 
 
 
-a = Encrypt("ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff", "Message pour test")
-
+a = Encrypt("ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff", "a")
 
 
 
