@@ -1,8 +1,6 @@
 class chiff:
-    def __init__(self, KEY, message):
-        self.key = KEY
-        self.message = message
-
+    def __init__(self):
+        pass
 
     def chiffrementCesar(self, decalage):
         resultat = ""
