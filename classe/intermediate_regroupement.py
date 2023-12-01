@@ -38,7 +38,7 @@ class Encrypt:
         pass
 
 
-def intermediaire_regroupement(message):
+def regroupement(message):
     # Diviser la chaîne en morceaux de lenth caractères
     x = allFunc()
     regroup = message
@@ -51,35 +51,27 @@ def intermediaire_regroupement(message):
     return regroup
 
 
-def decode_regroupement(message):
+def deregroupement(message):
     message = message.split("|")
     nbr_block = int(message.pop(1))
-    print(nbr_block)
     decoupage = int(len(message[0])/nbr_block)
-    print(decoupage)
+    print("nombre de caractère pour chaque bloc :", decoupage)
 
     parties_egales = [message[0][i * decoupage:(i + 1) * decoupage]
                       for i in range(nbr_block)]
-    print("avec les 0 : ", parties_egales)
+    print("chaque bloc complétés avec les 0 : ", parties_egales)
 
     parties_egales = [chaine.lstrip('0') for chaine in parties_egales]
 
-    print("sans les zeros : ", parties_egales)
-
-    '''lenth = 2
-    resultat = [self.message[i:i+lenth] for i in range(0, len(self.message), lenth)]
-    return resultat
-    '''
-
-    # Exemple d'utilisation
+    print("chaque bloc sans les zeros : ", parties_egales)
 
 
 liste = ["zeufhzsdiucghzyidcgzygvc", "qsucfhayigzcayigfcazycgaucgh",
          "asudhgcaiyuzcgayugcaygcaygcmvaygcaztgvefgcdtyagvcauvcgsayhdcgyiudgazcxyhzbv"]
 
-resultat_decoupe = intermediaire_regroupement(liste)
+resultat_decoupe = regroupement(liste)
 
 
 print(resultat_decoupe)
 
-print(decode_regroupement(resultat_decoupe))
+print(deregroupement(resultat_decoupe))
