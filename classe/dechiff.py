@@ -15,4 +15,13 @@ class Dechiff:
             else:
                 resultat += self.message[char]
         return resultat
+
     
+    def dechiffrementXOR(hex_text, key):
+        byte_text = bytearray.fromhex(hex_text)  
+        resultat = ""
+        keyLength = len(key)
+        for i in range(len(byte_text)):
+            xor_result = xorOperator(byte_text[i], ord(key[i % keyLength]))
+            resultat += chr(xor_result)
+        return resultat
