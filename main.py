@@ -1,3 +1,13 @@
+import random
+import hashlib
+import secrets
+from argparse import ArgumentParser
+
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+from cryptography.hazmat.backends import default_backend
+
+
 
 class Encrypt:
     def __init__(self, KEY, message):
