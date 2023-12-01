@@ -1,6 +1,6 @@
 class allFunc:
 
-    def est_premier(self,n):
+    def est_premier(self, n):
         """Vérifie si un nombre est premier."""
         if n < 2:
             return False
@@ -9,9 +9,7 @@ class allFunc:
                 return False
         return True
 
-
-
-    def nombre_premier_proche(self,nombre):
+    def nombre_premier_proche(self, nombre):
         """Trouve le nombre premier le plus proche supérieur."""
         if nombre < 2:
             return "Il n'y a pas de nombre premier inférieur à 2."
@@ -26,7 +24,6 @@ class allFunc:
         return superieur
 
 
-
 class Encrypt:
     def __init__(self, KEY, message):
         self.key = Key(KEY)
@@ -37,64 +34,50 @@ class Encrypt:
         self.key.keys[2] = self.key.deriveKeys(self.key.keyBase[2], 5)
         self.key.keys[3] = self.key.deriveKeys(self.key.keyBase[3], 2)
 
-
     def splitMessage(self, bits) -> list:
         pass
 
 
-
-
-
 def intermediaire_regroupement(message):
     # Diviser la chaîne en morceaux de lenth caractères
-    x=allFunc()
+    x = allFunc()
     regroup = message
     avant_nbr_premier = len(max(regroup, key=len))
     if not x.est_premier(avant_nbr_premier):
-        avant_nbr_premier=x.nombre_premier_proche(avant_nbr_premier)
-        
-    regroup=[i.zfill(avant_nbr_premier) for i in regroup]
+        avant_nbr_premier = x.nombre_premier_proche(avant_nbr_premier)
+
+    regroup = [i.zfill(avant_nbr_premier) for i in regroup]
     print(regroup)
-    regroup= "".join(regroup)+ '|' + str(len(regroup))
+    regroup = "".join(regroup) + '|' + str(len(regroup))
     print(regroup)
     return regroup
-    
-
-
 
 
 def decode_regroupement(message):
     message = message.split("|")
-    print(message)
     nbr_block = int(message.pop(1))
+    print("message", message)
     print(nbr_block)
-    decoupage = len(message[0])/nbr_block
+    decoupage = int(len(message[0])/nbr_block)
     print(decoupage)
-    
 
-
-
+    parties_egales = [message[0][i * decoupage:(i + 1) * decoupage]
+                      for i in range(nbr_block)]
+    return parties_egales
     '''lenth = 2
     resultat = [self.message[i:i+lenth] for i in range(0, len(self.message), lenth)]
     return resultat
     '''
 
-        # Exemple d'utilisation
+    # Exemple d'utilisation
 
 
-liste=["zeufhzsdiucghzyidcgzygvc","qsucfhayigzcayigfcazycgaucgh","asudhgcaiyuzcgayugcaygcaygcmvaygcaztgvefgcdtyagvcauvcgsayhdcgyiudgazcxyhzbv"]
+liste = ["zeufhzsdiucghzyidcgzygvc", "qsucfhayigzcayigfcazycgaucgh",
+         "asudhgcaiyuzcgayugcaygcaygcmvaygcaztgvefgcdtyagvcauvcgsayhdcgyiudgazcxyhzbv"]
 
 resultat_decoupe = intermediaire_regroupement(liste)
-
 
 
 print(resultat_decoupe)
 
 print(decode_regroupement(resultat_decoupe))
-
-
-
-
-
-
-
