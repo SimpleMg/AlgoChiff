@@ -15,6 +15,7 @@ class Encrypt:
         self.key = Key(KEY)
         self.func = allFunc()
         self.message = self.splitMessage(message)
+        print("Message",self.message)
         self.initialisationVector()
         self.initialisationKeys()
         self.layer(0)
@@ -25,9 +26,9 @@ class Encrypt:
 
     def initialisationKeys(self):
         self.key.keyBase = self.key.deriveKeys(self.key.KEY, 4)
-        self.key.keys[0] = self.key.deriveKeys(self.key.keyBase[0], 5)
-        self.key.keys[1] = self.key.deriveKeys(self.key.keyBase[1], 16)
-        self.key.keys[2] = self.key.deriveKeys(self.key.keyBase[2], 5)
+        self.key.keys[0] = self.key.deriveKeys(self.key.keyBase[0], 5 * len(self.message))
+        self.key.keys[1] = self.key.deriveKeys(self.key.keyBase[1], 16 * len(self.message))
+        self.key.keys[2] = self.key.deriveKeys(self.key.keyBase[2], 5 * len(self.message))
         self.key.keys[3] = self.key.deriveKeys(self.key.keyBase[3], 2)
 
     def initialisationVector(self):
@@ -38,21 +39,27 @@ class Encrypt:
     def layer(self, layer):
         for i in range(len(self.message)):
             for j in range(5):
-                key = self.key.deriveKeys(self.key.keys[layer][j], 3)
-                key[0] = self.adaptationKey(self.message[i], key[0])
+                key = self.key.deriveKeys(self.key.keys[layer][j + i * 5], 3)
                 self.message[i] = self.func.xor(key[0], self.message[i])
-                #self.message[i] = self.func.funcKey[j%4][0](self.message[i] , key[1])
-                key[1] = self.adaptationKey(self.message[i], key[2])
+                self.message[i] = self.func.funcKey[j%len(self.func.funcKey)][0](self.message[i], key[1])
                 self.message[i] = self.func.xor(key[2], self.message[i])
-        
-  
+
+        print("Résultat Chiffrement",self.message)
+        b = Decrypt("ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff", self.message)
+    
+    def mainLoop(self):
+        for i in range(len(self.message)):
+            for j in range(16):
+                key = self.key.deriveKeys(self.key.keys[1][j], 3)
+                self.message[i] = self.func.xor(key[0], self.message[i])
+                for k in range(5):
+                    self.func.func[self.vecInit[0][j*5 + k + i * 16 * 5]]
     
     def adaptationKey(self, message, key):
         if len(key) == len(message):
             return key
         else:
             return self.key.deriveKeys(key, 1, len(message))[0]
-            
 
 
 
@@ -66,21 +73,19 @@ class Decrypt:
     
     def initialisationKeys(self):
         self.key.keyBase = self.key.deriveKeys(self.key.KEY, 4)
-        self.key.keys[0] = self.key.deriveKeys(self.key.keyBase[0], 5)
-        self.key.keys[1] = self.key.deriveKeys(self.key.keyBase[1], 16)
-        self.key.keys[2] = self.key.deriveKeys(self.key.keyBase[2], 5)
+        self.key.keys[0] = self.key.deriveKeys(self.key.keyBase[0], 5 * len(self.message))
+        self.key.keys[1] = self.key.deriveKeys(self.key.keyBase[1], 16 * len(self.message))
+        self.key.keys[2] = self.key.deriveKeys(self.key.keyBase[2], 5 * len(self.message))
         self.key.keys[3] = self.key.deriveKeys(self.key.keyBase[3], 2)
     
     def layer(self, layer):
         for i in range(1, len(self.message) + 1):
             for j in range(1, 6):
-                key = self.key.deriveKeys(self.key.keys[layer][-j], 3)
-                key[2] = self.adaptationKey(self.message[-i], key[2])
+                key = self.key.deriveKeys(self.key.keys[layer][-(j + (i - 1) * 5)], 3)
                 self.message[-i] = self.func.xor(key[2], self.message[-i])
-                #self.message[-i] = self.func.funcKey[-(j%4)][0](self.message[-i] , key[1])
-                key[0] = self.adaptationKey(self.message[-i], key[0])
+                self.message[-i] = self.func.funcKeyDecode[(j-1)%len(self.func.funcKeyDecode)][0](self.message[-i] , key[1])
                 self.message[-i] = self.func.xor(key[0], self.message[-i])
-        
+        print("Résultat Dechiffrement", self.message) 
     
     def adaptationKey(self, message, key):
         if len(key) == len(message):
@@ -91,6 +96,16 @@ class Decrypt:
 
 
 
+
+
+a = Encrypt("ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff", "Message pour test")
+
+
+
+
+
+
+'''
 
 def argument() -> None:
     argParser = ArgumentParser()
@@ -107,3 +122,5 @@ def argument() -> None:
 
 if __name__ == '__main__':
     print(argument())
+
+'''
