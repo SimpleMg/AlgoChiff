@@ -1,6 +1,7 @@
 import random
 import hashlib
 import secrets
+import base64
 from argparse import ArgumentParser
 
 from cryptography.hazmat.primitives import hashes
