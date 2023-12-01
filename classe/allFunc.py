@@ -43,6 +43,11 @@ class allFunc:
         return ''.join(str(idx % 2) * int(chunk) for idx, chunk in enumerate([self.message[i:i+3] for i in range(0, len(self.message), 3)]))
     
 
+
+    def inverse_binaire(nombre_binaire):
+	return ''.join('0' if bit == '1' else '1' for bit in nombre_binaire)
+
+    
     def matriceMelange(self):
         hexa = [format(i, '02x') for i in range(256)]
         random.seed(CLEE)
