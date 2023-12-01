@@ -12,3 +12,23 @@ class Encrypt:
 
     def splitMessage(self, bits) -> list:
         pass
+
+
+
+
+
+def argument() -> None:
+    argParser = ArgumentParser()
+    argParser.add_argument("-f", "--file", help="File with message")
+    argParser.add_argument("-k", "--key", help="Encryption key")
+    argParser.add_argument("-m", "--mode", help="Encrypt (E) / Decrypt (D)")
+    args = argParser.parse_args()
+    assert args.key, "Miss the KEY (512 bits) with --key <key>"
+    KEY = Key(args.key)
+    assert args.file, "Miss file path with --file <path>"
+    message = open(args.file, 'r').read()
+    mode = 1 if args.mode == 'D' else 0
+
+
+if __name__ == '__main__':
+    print(argument())
