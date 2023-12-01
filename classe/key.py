@@ -9,12 +9,15 @@ from cryptography.hazmat.backends import default_backend
 class Key:
     def __init__(self, key):
         self.KEY = key
+        self.keyBase = []
+        self.keys = [[], [], [], []]
     
-    def derive_keys(self, key, num_keys):
+    def deriveKeys(self, key, numKeys, exit=32):
         master_key_bytes = key.encode('utf-8')
         random.seed(hashlib.sha256(key.encode('utf-8')).hexdigest())
         salt = random.randbytes(256)
-        return [hashlib.sha256(HKDF(algorithm=hashes.SHA256(), length=32, salt=salt, info=str(i).encode('utf-8'), backend=default_backend()).derive(master_key_bytes).hex().encode('utf-8')).hexdigest() for i in range(num_keys)]
+        return [hashlib.sha256(HKDF(algorithm=hashes.SHA256(), length=exit, salt=salt, info=str(i).encode('utf-8'), backend=default_backend()).derive(master_key_bytes).hex().encode('utf-8')).hexdigest() for i in range(numKeys)]
+
 
 
 
