@@ -30,7 +30,6 @@ class allFunc:
     
 
     def conversion_binaire(self):
-        print(binary)
         res = ''
         binary = self.message.replace('01', '0|1').replace('10', '1|0').split('|')
         if binary[0][0] != '0':res += '000'
