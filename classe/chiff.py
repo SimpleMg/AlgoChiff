@@ -38,14 +38,13 @@ class chiff:
         return int(resultat, 2)
         
 
-    def chiffrementXOR(self):
-        resultat = ""
-        keyLength = len(self.key)
-        for i in range(len(self.message)):
-            # resultat += chr(ord(text[i]) ^ ord(key[i % keyLength]))
-            resultat += chr(self.xorOperator(ord(self.message[i]), ord(self.key[i % keyLength])))
-        return resultat
-
+    def chiffrementXOR(text, key):
+        byte_result = bytearray()
+        keyLength = len(key)
+        for i in range(len(text)):
+            xor_result = xorOperator(ord(text[i]), ord(key[i % keyLength]))
+            byte_result.append(xor_result)  
+        return byte_result.hex()  
 
 
 
