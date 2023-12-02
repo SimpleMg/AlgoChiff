@@ -23,11 +23,11 @@ class Key:
         salt = random.randbytes(256)
         return [hashlib.sha256(HKDF(algorithm=hashes.SHA256(), length=exit, salt=salt, info=str(i).encode('utf-8'), backend=default_backend()).derive(master_key_bytes).hex().encode('utf-8')).hexdigest() for i in range(numKeys)]
 
-
 class allFunc:
     def __init__(self):
-        self.func = {0: self.binary_inversion, 1: self.binary_switch, 2: self.binary_conversion, 3: self.reverseOneTwo, 4: self.reverseString, 5: self.iteration}
+        self.func = {0: self.binary_inversion, 1: self.binary_switch, 2: self.substitute_hex, 3: self.reverseOneTwo, 4: self.reverseString, 5: self.iteration}
         self.funcKey = {0: self.matriceMelange, 1: self.messageToListToMelange}
+        self.funcDecode = {0: self.binary_inversion_decode, 1: self.binary_switch_decode, 2: self.substitute_hex_decode, 3: self.reverseOneTwo, 4: self.reverseString, 5: self.iteration_decode}
         self.funcKeyDecode = {0: self.matriceMelange_decode, 1: self.messageToListToMelange_decode}
 
     def xor(self, input_hex1, input_hex2, zero=True):
@@ -38,6 +38,15 @@ class allFunc:
         if len(result_hex)%2 != 0 and zero:
             result_hex = "0" + result_hex
         return result_hex
+    
+    def isPrime(self, n):
+        return n > 1 and all(n % i != 0 for i in range(2, int(n**0.5) + 1))
+
+    def nextPrimeNumber(self, nombre):
+        if nombre < 2:return nombre
+        superieur = nombre + 1
+        while not self.isPrime(superieur):superieur += 1
+        return superieur
 
     #Fonction de conversion
     def stringToInt(self, text):
@@ -129,17 +138,15 @@ class allFunc:
         res = self.intToHex(self.binToInt(decode))
         return res if len(res)%2 == 0 else "0" + res
     
-    def binary_conversion(self, binary):
-        res = ''
-        binary = binary.replace('01', '0|1').replace('10', '1|0').split('|')
-        if binary[0][0] != '0':res += '000'
-        for i in range(len(binary)):
-            lenBinary = len(binary[i])
-            res += ''.join(['999000' * (lenBinary // 999), str(lenBinary % 999).zfill(3)])
-        return res
+    def substitute_hex(self, hex_input):
+        hex_input = hex_input
+        substituted_hex = ''.join('{:X}'.format(15 - int(c, 16)) for c in hex_input)
+        return substituted_hex.lower()
     
-    def binary_conversion_decode(text: str):
-        return ''.join(str(idx % 2) * int(chunk) for idx, chunk in enumerate([text[i:i+3] for i in range(0, len(text), 3)]))
+    def substitute_hex_decode(self, substituted_hex):
+        substituted_hex = substituted_hex
+        original_hex = ''.join('{:X}'.format(15 - int(c, 16)) for c in substituted_hex)
+        return original_hex.lower()
     
     def reverseOneTwo(self, hexa):
         hexa = list(hexa)
@@ -163,7 +170,8 @@ class allFunc:
         iterationLst.sort()
         idx = iterationLst.index(hexa)
         sep = "a4d2"
-        return(str(idx) + sep + iterationLst[-1])
+        res = str(idx) + sep + iterationLst[-1]
+        return(res if len(res)%2 == 0 else "0" + res)
     
     def iteration_decode(self, text):
         idx = ""
@@ -304,7 +312,7 @@ class allFunc:
         if len(result)%2 != 0:
             result = "0" + result
         return result
-
+    
 
 class Encrypt:
     def __init__(self, KEY, message):
@@ -319,10 +327,8 @@ class Encrypt:
         self.initialisationVector()
         self.mainLoop()
         self.concatenationMessage(self.vecInit)
-        print(self.message)
         self.splitMessage()
-        self.layer(2)
-        self.concatenationMessage()
+        
     
     def splitMessage(self):
         hexa = self.func.intToHex(self.func.stringToInt(self.message))
@@ -357,7 +363,9 @@ class Encrypt:
                     self.message[i] = self.func.func[self.vecInit[0][j*5 + k + i * 16 * 5]](self.message[i])
                 self.message[i] = self.func.funcKey[self.vecInit[1][j + i * 16]](self.message[i], key[1])
                 self.message[i] = self.func.xor(key[2], self.message[i])
-        #b = Decrypt("ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff", self.message)
+        
+        print("Résultat Chiffrement",self.message)
+        b = Decrypt("ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff", self.message)
     
     def adaptationKey(self, message, key):
         if len(key) == len(message):
@@ -389,11 +397,16 @@ class Decrypt:
         self.func = allFunc()
         self.message = message
         self.initialisationKeys()
+        self.splitMessageReverse()
+        self.concatenationMessageReverse()
+        self.mainLoop()
+        self.splitMessageReverse()
+        self.concatenationMessageReverse()
         self.layer(0)
     
     def splitMessageReverse(self):
         res = ''.join(self.message)
-        self.message = self.func.intToString(self.func.hexToInt(res))
+        return self.func.intToString(self.func.hexToInt(res))
     
     def initialisationKeys(self):
         self.key.keyBase = self.key.deriveKeys(self.key.KEY, 4)
@@ -407,6 +420,7 @@ class Decrypt:
                 self.message[-i] = self.func.xor(key[2], self.message[-i])
                 self.message[-i] = self.func.funcKeyDecode[(j-1)%len(self.func.funcKeyDecode)](self.message[-i] , key[1])
                 self.message[-i] = self.func.xor(key[0], self.message[-i])
+        #print("Résultat Dechiffrement", self.func.intToString(self.func.hexToInt(self.message)))
     
     def mainLoop(self):
         self.key.keys[1] = self.key.deriveKeys(self.key.keyBase[1], 16 * len(self.message))
@@ -418,6 +432,8 @@ class Decrypt:
                     self.message[-i] = self.func.funcDecode[self.vecInit[0][-(j*5 + k + i * 16 * 5)]](self.message[-i])
                 self.message[-i] = self.func.funcKeyDecode[self.vecInit[1][-(j + i * 16)]](self.message[i], key[1])
                 self.message[-i] = self.func.xor(key[0], self.message[-i])
+        print("Résultat Déchiffrement: ", self.message )
+
 
     def adaptationKey(self, message, key):
         if len(key) == len(message):
@@ -445,6 +461,11 @@ class Decrypt:
         res = [message[0][i:i+int(len(message[0])/nbr_block)] for i in range(0, len(message[0]), int(len(message[0])/nbr_block))]
         self.message = [chaine.lstrip('0') for chaine in res]
         
+    
+    
+
+toEncrypt = Encrypt("4fc9ce8d6459781b09d0b83f69692868dc86035b11f36e47fa552a0267323a21be3c1066fc58e3068dda830f1b142275818c83d87ff59081118de5408d67b629", "Le petit zizi de Tylan est rigolo")
+                    
 
 
 
