@@ -161,31 +161,22 @@ class allFunc:
         return hexa[::-1]
     
     def iteration(self, hexa):
-        iterationLst = []
-        for i in range(len(hexa)):
-            toIterate = ""
-            for j in range(len(hexa)):
-                toIterate += hexa[(j+i)%len(hexa)]
-            iterationLst.append(toIterate)
+        iterationLst = ["".join(hexa[(j+i)%len(hexa)] for j in range(len(hexa))) for i in range(len(hexa))]
         iterationLst.sort()
         idx = iterationLst.index(hexa)
         sep = "a4d2"
         res = str(idx) + sep + iterationLst[-1]
-        return(res if len(res)%2 == 0 else "0" + res)
-    
+        return res if len(res) % 2 == 0 else "0" + res
+
     def iteration_decode(self, text):
-        idx = ""
         sep = text.find("a4d2")
-        idx = text[:sep]
+        print(text)
+        print(sep)
+        idx = int(text[:sep])
         text = text[sep+4:]
-        iterationLst = []
-        for i in range(len(text)):
-            toIterate = ""
-            for j in range(len(text)):
-                toIterate += text[(j+i)%len(text)]
-            iterationLst.append(toIterate)
+        iterationLst = ["".join(text[(j+i)%len(text)] for j in range(len(text))) for i in range(len(text))]
         iterationLst.sort()
-        return(iterationLst[int(idx)])
+        return iterationLst[idx]
 
     #Avec clef de Chiffrement
     def matriceMelange(self, hexa, KEY):
@@ -328,11 +319,12 @@ class Encrypt:
         self.initialisationVector()
         self.mainLoop()
         self.concatenationMessage(self.vecInit)
-        self.splitMessage()
-        print(self.message)
-        self.layer(2)
+        # self.splitMessage()
+        # print(self.message)
+        # self.layer(2)
+        print(self.func.xor("fedf12834c0881b469d5116cbf273aeab2e75bf8386c6c6ccea795e3c61ee5e7d7a9f448d488fd5787912b60fc00c523ff38fdf7f3be0e4c2ad777552b945fb4447e342db24fee30bbafa3be385999817b4edca8b0871ce469f00308119fa86e2e0ae4af27434a1f8f752a6eded5d9d744af376a411d2a38032d8a48c3839f60f95ac4d9c18c9f8cf88c43b2fe1ef39a92db80fb26e01abb088998c35b441d7607d4e9ae9f8a77dda0d496fc08e724f49bee","1862f2909dc48fa8fe6c48be3322787642b4c59e162f5442cdd6020595712b16"))
         b = Decrypt("ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff", self.message)
-
+        
         
     def splitMessage(self, first=False):
         if first:
@@ -364,21 +356,29 @@ class Encrypt:
                 self.message[i] = self.func.xor(key[0], self.message[i])
                 self.message[i] = self.func.funcKey[j%len(self.func.funcKey)](self.message[i], key[1])
                 self.message[i] = self.func.xor(key[2], self.message[i])
-        
-        print("Résultat Chiffrement layer code ", layer)
 
     def mainLoop(self):
         self.key.keys[1] = self.key.deriveKeys(self.key.keyBase[1], 16 * len(self.message))
         for i in range(len(self.message)):
+            print("\n\nI: ", i)
             for j in range(16):
-                key = self.key.deriveKeys(self.key.keys[1][j], 3)
+                print("\nJ: ", j)
+                key = self.key.deriveKeys(self.key.keys[1][j + i * 16], 3)
+                print("\n", j + i * 16)
+                print("KEY: ", key)
                 self.message[i] = self.func.xor(key[0], self.message[i])
+                print("Chiffrement XOR 1: ", self.message[i])
+                print("Clef XOR 1: ", key[0])
                 for k in range(5):
                     self.message[i] = self.func.func[self.vecInit[0][j*5 + k + i * 16 * 5]](self.message[i])
+                    print("Chiffrement", k ,": ", self.message[i])
                 self.message[i] = self.func.funcKey[self.vecInit[1][j + i * 16]](self.message[i], key[1])
+                print("Chiffrement Clef: ", self.message[i])
+                print("Key Clef: ", key[1])
                 self.message[i] = self.func.xor(key[2], self.message[i])
-        
-        print("Résultat Chiffrement mainloop code ")
+                print("Chiffrement XOR 2: ", self.message[i])
+                print("key XOR 2: ", key[2])
+        print("\n\nVerif Chiffrement: ", self.message)
     
     def adaptationKey(self, message, key):
         if len(key) == len(message):
@@ -408,15 +408,16 @@ class Decrypt:
         self.func = allFunc()
         self.message = message
         self.initialisationKeys()
-        self.layer(2)
-        print(self.message)
-        self.splitMessageReverse()
+        # self.layer(2)
+        # self.splitMessageReverse()
         self.concatenationMessageReverse(True)
+        # Code BON
+        print("Vecteur Initialisation :\n", self.vecInit)
         self.mainLoop()
-        self.splitMessageReverse()
-        self.concatenationMessageReverse()
-        self.layer(0)
-        self.splitMessageReverse(True)
+        # self.splitMessageReverse()
+        # self.concatenationMessageReverse()
+        # self.layer(0)
+        # self.splitMessageReverse(True)
     
     def splitMessageReverse(self, first=False):
         if first:
@@ -436,19 +437,34 @@ class Decrypt:
                 self.message[-i] = self.func.xor(key[2], self.message[-i])
                 self.message[-i] = self.func.funcKeyDecode[(j-1)%len(self.func.funcKeyDecode)](self.message[-i] , key[1])
                 self.message[-i] = self.func.xor(key[0], self.message[-i])
-        print("Résultat Chiffrement layer decode ", layer)
     
     def mainLoop(self):
+        print("\n\nVerif Dechiffrement: ", self.message)
         self.key.keys[1] = self.key.deriveKeys(self.key.keyBase[1], 16 * len(self.message))
         for i in range(1, len(self.message)+1):
+            print("\n\nI: ", i)
+            print(self.message[-i])
             for j in range(1, 17):
-                key = self.key.deriveKeys(self.key.keys[1][-j], 3)
+                print("\n\nJ: ", j)
+                key = self.key.deriveKeys(self.key.keys[1][-(j + (i - 1) * 16)], 3)
+                print("\n", len(self.key.keys[1])-(j + (i - 1) * 16))
+                print("KEY: ", key)
+                print("Fonction XOR 2")
+                print("Dechiffrement XOR 2: ", self.message[-i])
+                print("key XOR 2: ", key[2])
                 self.message[-i] = self.func.xor(key[2], self.message[-i])
-                for k in range(1, 6):
-                    self.message[-i] = self.func.funcDecode[self.vecInit[0][-(j*5 + k + i * 16 * 5)]](self.message[-i])
+                print("Fonction chiffrement key", self.vecInit[1][-(j + i * 16)])
+                print("Dechiffrement Clef: ", self.message[-i])
+                print("key clef: ", key[1])
                 self.message[-i] = self.func.funcKeyDecode[self.vecInit[1][-(j + i * 16)]](self.message[i], key[1])
+                for k in range(1, 6):
+                    print("Fonction chiffrement", self.vecInit[0][-(j*5 + k + i * 16 * 5)])
+                    print("Déchiffrement", k ,": ", self.message[-i])
+                    self.message[-i] = self.func.funcDecode[self.vecInit[0][-(j*5 + k + i * 16 * 5)]](self.message[-i])
+                print("Fonction XOR 1")
+                print("Dechiffrement XOR 1: ", self.message[-i])
                 self.message[-i] = self.func.xor(key[0], self.message[-i])
-        print("Résultat Déchiffrement mainloop decode: ")
+        #print("\n\nVerif Dechiffrement: ", self.message)
 
 
     def adaptationKey(self, message, key):
@@ -465,7 +481,7 @@ class Decrypt:
             spliter2 = self.message.find(str(len(self.func.func)), spliter + 1)
             message.append(self.message[spliter+1:spliter2])
             self.message = self.message[spliter2+1:]
-            self.vectorInit = [[int(message[0][i:i+2]) for i in range(0, len(message[0]), 2)], [int(message[1][i:i+2]) for i in range(0, len(message[1]), 2)]]
+            self.vecInit = [[int(message[0][i:i+2]) for i in range(0, len(message[0]), 2)], [int(message[1][i:i+2]) for i in range(0, len(message[1]), 2)]]
         else:message = [0, 0]
         gIdx = False
         temp = 0
@@ -481,14 +497,15 @@ class Decrypt:
         
 
 
-toEncrypt = Encrypt("4fc9ce8d6459781b09d0b83f69692868dc86035b11f36e47fa552a0267323a21be3c1066fc58e3068dda830f1b142275818c83d87ff59081118de5408d67b629", "Le petit zizi de martine est rigolo")
+toEncrypt = Encrypt("ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff", "a")
                     
 
 
 
 
 
-'''
+
+
 
 def argument() -> None:
     argParser = ArgumentParser()
@@ -500,10 +517,24 @@ def argument() -> None:
     KEY = Key(args.key)
     assert args.file, "Miss file path with --file <path>"
     message = open(args.file, 'r').read()
-    mode = 1 if args.mode == 'D' else 0
+    
+    mode = 1 if args.mode == 'D' or args.mode == 'Decrypt' else 0
+    if mode == 1:
+        message = [message[i:i+64] for i in range(0, len(message), 64)]
+        for i in len(message):
+            message[i] = Encrypt(KEY, message[i])
+        file = open('res.txt', 'w')
+        file.write('|'.join([i.messege for i in message]))
+    else:
+        message = message.split('|')
+        for i in len(message):
+            message[i] = Decrypt(KEY, message[i])
+        file = open('res.txt', 'w')
+        file.write('|'.join([i.messege for i in message]))
+
+        
 
 
 if __name__ == '__main__':
     print(argument())
 
-'''
