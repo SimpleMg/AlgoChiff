@@ -329,11 +329,11 @@ class Encrypt:
         self.mainLoop()
         self.concatenationMessage(self.vecInit)
         self.splitMessage()
+        print(self.message)
         self.layer(2)
         b = Decrypt("ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff", self.message)
 
         
-    
     def splitMessage(self, first=False):
         if first:
             hexa = self.func.intToHex(self.func.stringToInt(self.message))
@@ -409,6 +409,7 @@ class Decrypt:
         self.message = message
         self.initialisationKeys()
         self.layer(2)
+        print(self.message)
         self.splitMessageReverse()
         self.concatenationMessageReverse(True)
         self.mainLoop()
