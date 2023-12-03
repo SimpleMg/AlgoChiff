@@ -27,17 +27,25 @@ class allFunc:
     def __init__(self):
         self.func = {0: self.binary_inversion, 1: self.binary_switch, 2: self.substitute_hex, 3: self.reverseOneTwo, 4: self.reverseString}
         self.funcKey = {0: self.matriceMelange, 1: self.messageToListToMelange}
+        # self.funcKey = {0: self.matriceMelange, 1: self.messageToListToMelange}
         self.funcDecode = {0: self.binary_inversion, 1: self.binary_switch_decode, 2: self.substitute_hex_decode, 3: self.reverseOneTwo, 4: self.reverseString}
         self.funcKeyDecode = {0: self.matriceMelange_decode, 1: self.messageToListToMelange_decode}
+        # self.funcKeyDecode = {0: self.matriceMelange_decode, 1: self.messageToListToMelange_decode}
 
-    def xor(self, input_hex1, input_hex2, zero=True):
-        int1 = int(input_hex1, 16)
-        int2 = int(input_hex2, 16)
-        result_int = int1 ^ int2
-        result_hex = format(result_int, 'x')
-        if len(result_hex)%2 != 0 and zero:
-            result_hex = "0" + result_hex
-        return result_hex
+    def xor(self, key, msg):
+        if len(key) > len(msg):
+            key = key[:(len(msg))]
+        elif len(key) < len(msg):
+            while len(key) < len(msg):
+                key += key
+            key = key[:(len(msg))]
+        assert len(key) == len(msg), "xor: msg and key have not the same len"
+        a = self.hexToBin(key)
+        b = self.hexToBin(msg)
+        res = ''
+        for i in range(len(a)):
+            res += str(int(a[i]) ^ int(b[i]))
+        return self.binToHex(res)
     
     def isPrime(self, n):
         return n > 1 and all(n % i != 0 for i in range(2, int(n**0.5) + 1))
@@ -136,6 +144,7 @@ class allFunc:
 
     #Avec clef de Chiffrement
     def matriceMelange(self, hexa, KEY):
+        if len(hexa)%2 != 0: hexa = '0' + hexa
         hexaForm = [format(i, '02x') for i in range(256)]
         random.seed(KEY)
         random.shuffle(hexaForm)
@@ -143,6 +152,7 @@ class allFunc:
         return ''.join(matrice[int(hexa[i], 16)][int(hexa[i + 1], 16)] for i in range(0, len(hexa), 2))
     
     def matriceMelange_decode(self, hexa, KEY):
+        hexa = ("0" + hexa) if len(hexa)%2 != 0 else hexa
         hexaForm = [format(i, '02x') for i in range(256)]
         random.seed(KEY)
         random.shuffle(hexaForm)
@@ -154,14 +164,13 @@ class allFunc:
         return res
     
     def messageToListToMelange(self, hexa, KEY):
-        assert len(hexa) % 2 == 0, "Not a hexa"
-        hexa = [hexa[i:i + 2] for i in range(0, len(hexa), 2)]
+        hexa = [i for i in hexa]
         random.seed(KEY)
         [random.shuffle(hexa) for _ in range(random.randint(5, 20))]
         return ''.join(hexa)
-    
+
     def messageToListToMelange_decode(self, hexa, KEY):
-        hexa = [hexa[i:i+2] for i in range(0, len(hexa), 2)]
+        hexa = [i for i in hexa]
         index = [str(i) for i in range(len(hexa))]
         random.seed(KEY)
         for i in range(random.randint(5, 20)):
@@ -272,12 +281,12 @@ class Encrypt:
         self.layer(0)
         self.concatenationMessage()
         self.splitMessage()
+        print(self.message)
         self.initialisationVector()
         self.mainLoop()
         self.concatenationMessage(self.vecInit)
-        print(self.message)
-        # self.splitMessage()
-        # self.layer(2)
+        self.splitMessage()
+        self.layer(2)
         #print(self.func.xor("fedf12834c0881b469d5116cbf273aeab2e75bf8386c6c6ccea795e3c61ee5e7d7a9f448d488fd5787912b60fc00c523ff38fdf7f3be0e4c2ad777552b945fb4447e342db24fee30bbafa3be385999817b4edca8b0871ce469f00308119fa86e2e0ae4af27434a1f8f752a6eded5d9d744af376a411d2a38032d8a48c3839f60f95ac4d9c18c9f8cf88c43b2fe1ef39a92db80fb26e01abb088998c35b441d7607d4e9ae9f8a77dda0d496fc08e724f49bee","1862f2909dc48fa8fe6c48be3322787642b4c59e162f5442cdd6020595712b16"))
         b = Decrypt("ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff", self.message)
         
@@ -285,6 +294,7 @@ class Encrypt:
     def splitMessage(self, first=False):
         if first:
             hexa = self.func.intToHex(self.func.stringToInt(self.message))
+            if len(hexa)%2!=0:hexa = '0' + hexa
         else:
             hexa = self.message
         self.message = [hexa[i:i+32] for i in range(0, len(hexa), 32)]
@@ -321,14 +331,14 @@ class Encrypt:
                 print("\n     J: ", j)
                 key = self.key.deriveKeys(self.key.keys[1][j + i * 16], 3)
                 self.message[i] = self.func.xor(key[0], self.message[i])
-                for k in range(5):
-                    print("\n          K: ", k)
-                    print("\n          Fonction de Chiffrement sans Clef:")
-                    print("          Fonction numéro: ", self.vecInit[0][j*5 + k + i * 16 * 5])
-                    print("          Indice dans le vecteur: ", j*5 + k + i * 16 * 5)
-                    print("          Message à chiffrer: ", self.message[i])
-                    self.message[i] = self.func.func[self.vecInit[0][j*5 + k + i * 16 * 5]](self.message[i])
-                    print("          Message chiffré: ", self.message[i])
+                # for k in range(5):
+                #     print("\n          K: ", k)
+                #     print("\n          Fonction de Chiffrement sans Clef:")
+                #     print("          Fonction numéro: ", self.vecInit[0][j*5 + k + i * 16 * 5])
+                #     print("          Indice dans le vecteur: ", j*5 + k + i * 16 * 5)
+                #     print("          Message à chiffrer: ", self.message[i])
+                #     self.message[i] = self.func.func[self.vecInit[0][j*5 + k + i * 16 * 5]](self.message[i])
+                #     print("          Message chiffré: ", self.message[i])
                 print("\n     Fonction de Chiffrement avec Clef:")
                 print("     Fonction numéro: ", self.vecInit[1][j + i * 16])
                 print("     Indice dans le vecteur: ", j + i * 16)
@@ -366,16 +376,17 @@ class Decrypt:
         self.func = allFunc()
         self.message = message
         self.initialisationKeys()
-        # self.layer(2)
-        # self.splitMessageReverse()
+        self.layer(2)
+        self.splitMessageReverse()
         self.concatenationMessageReverse(True)
-        # Code BON
         print("\n\n\nDECRIPTAGE EN COUR !!!!!!!!!!!!!!!!!")
         self.mainLoop()
-        # self.splitMessageReverse()
-        # self.concatenationMessageReverse()
-        # self.layer(0)
-        # self.splitMessageReverse(True)
+        self.splitMessageReverse()
+        self.concatenationMessageReverse()
+        self.layer(0)
+        print(self.message)
+        self.splitMessageReverse(True)
+        print("Résultats: ", self.message)
         
     def splitMessageReverse(self, first=False):
         if first:
@@ -411,14 +422,14 @@ class Decrypt:
                 print("     Clef de déchiffrement: ", key[1])
                 self.message[-i] = self.func.funcKeyDecode[self.vecInit[1][-(j + (i-1) * 16)]](self.message[-i], key[1])
                 print("     Résultat déchiffré: ", self.message[-i])
-                for k in range(1, 6):
-                    print("\n          K: ", k)
-                    print("\n          Fonction de déhiffrement sans Clef:")
-                    print("          Fonction numéro: ", self.vecInit[0][-((j-1)*5 + k + (i-1) * 16 * 5)])
-                    print("          Indice dans le vecteur: ", -((j-1)*5 + k + (i-1) * 16 * 5), " / ", len(self.vecInit[0])-((j-1)*5 + k + (i-1) * 16 * 5))
-                    print("          Message à déchiffrer: ", self.message[-i])
-                    self.message[-i] = self.func.funcDecode[self.vecInit[0][-((j-1)*5 + k + (i-1) * 16 * 5)]](self.message[-i])
-                    print("          Message déchiffré: ", self.message[-i])
+                # for k in range(1, 6):
+                #     print("\n          K: ", k)
+                #     print("\n          Fonction de déhiffrement sans Clef:")
+                #     print("          Fonction numéro: ", self.vecInit[0][-((j-1)*5 + k + (i-1) * 16 * 5)])
+                #     print("          Indice dans le vecteur: ", -((j-1)*5 + k + (i-1) * 16 * 5), " / ", len(self.vecInit[0])-((j-1)*5 + k + (i-1) * 16 * 5))
+                #     print("          Message à déchiffrer: ", self.message[-i])
+                #     self.message[-i] = self.func.funcDecode[self.vecInit[0][-((j-1)*5 + k + (i-1) * 16 * 5)]](self.message[-i])
+                #     print("          Message déchiffré: ", self.message[-i])
                 self.message[-i] = self.func.xor(key[0], self.message[-i])
 
 
@@ -449,18 +460,19 @@ class Decrypt:
                 gIdx = True
         nbr_block = int(message[2])
         res = [message[3][i:i+int(len(message[3])/nbr_block)] for i in range(0, len(message[3]), int(len(message[3])/nbr_block))]
-        self.message = [chaine.lstrip('0') for chaine in res]
+        self.message = [chaine.lstrip('0') if len(chaine.lstrip('0'))%2 == 0 else "0" + chaine.lstrip('0') for chaine in res]
+        
         
 
 
-toEncrypt = Encrypt("ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff", "a")
+toEncrypt = Encrypt("ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff", "0azdad0zazaa")
 
 
 
 
 
 
-
+'''
 
 def argument() -> None:
     argParser = ArgumentParser()
@@ -493,3 +505,4 @@ def argument() -> None:
 if __name__ == '__main__':
     print(argument())
 
+'''
