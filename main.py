@@ -24,8 +24,10 @@ class allFunc:
     def __init__(self):
         self.func = {0: self.binary_inversion, 1: self.binary_switch, 2: self.substitute_hex, 3: self.reverseOneTwo, 4: self.reverseString}
         self.funcKey = {0: self.matriceMelange}
+        # self.funcKey = {0: self.matriceMelange, 1: self.messageToListToMelange}
         self.funcDecode = {0: self.binary_inversion, 1: self.binary_switch_decode, 2: self.substitute_hex_decode, 3: self.reverseOneTwo, 4: self.reverseString}
         self.funcKeyDecode = {0: self.matriceMelange_decode}
+        # self.funcKeyDecode = {0: self.matriceMelange_decode, 1: self.messageToListToMelange_decode}
 
     def xor(self, key, msg):
         if len(key) > len(msg):
@@ -146,6 +148,7 @@ class allFunc:
     def matriceMelange_decode(self, hexa, KEY):
         if hexa[:2] == "ff": zero = True
         elif hexa[:2] == "ee": zero = False
+        assert hexa[:2] == "ff" or hexa[:2] == "ee", "SALOPE SALOPE"
         hexaForm = [format(i, '02x') for i in range(256)]
         random.seed(KEY)
         random.shuffle(hexaForm)
@@ -191,7 +194,9 @@ class Encrypt:
         self.concatenationMessage(self.vecInit)
         self.splitMessage()
         self.layer(2)
-        self.concatenationMessage()        
+        self.concatenationMessage()
+        #decrypt = Decrypt("ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff", self.message)
+        
         
     def splitMessage(self, first=False):
         if first:
@@ -218,12 +223,21 @@ class Encrypt:
 
     def layer(self, layer):
         self.key.keys[layer] = self.key.deriveKeys(self.key.keyBase[layer], 5 * len(self.message))
+        log1 = ""
         for i in range(len(self.message)):
+            log1 += ("\n\nI : " + str(i))
             for j in range(5):
+                log1 += ("\nJ : " + str(j))
                 key = self.key.deriveKeys(self.key.keys[layer][j + i * 5], 3)
+                log1 += ("\nInit: " + self.message[i])
                 self.message[i] = self.func.xor(key[0], self.message[i])
+                log1 += ("\nXOR 1: " + self.message[i])
                 self.message[i] = self.func.funcKey[j%len(self.func.funcKey)](self.message[i], key[1])
+                log1 += ("\nChiff: " + self.message[i])
                 self.message[i] = self.func.xor(key[2], self.message[i])
+                log1 += ("\nXOR 2: " + self.message[i])
+        file = open('LOGS.txt', 'w', encoding="utf-8")
+        file.write(log1)
 
     def mainLoop(self):
         self.key.keys[1] = self.key.deriveKeys(self.key.keyBase[1], 16 * len(self.message))
@@ -244,9 +258,9 @@ class Encrypt:
     
     def concatenationMessage(self, vector=None):
         concat = self.message
-        maxLen = len(max(concat, key=len))
-        concat = [concat[i].zfill(maxLen) for i in range(len(concat))]
-        lenMess = hex(len(self.message))[2:].zfill(4)
+        maxLen = len(self.message[0])
+        concat = "".join(concat[i] for i in range(len(concat)))
+        lenMess = hex(maxLen)[2:].zfill(4)
         concat = lenMess + "".join(concat)
         if vector:
             vec = ''
@@ -283,12 +297,16 @@ class Decrypt:
     
     def layer(self, layer):
         self.key.keys[layer] = self.key.deriveKeys(self.key.keyBase[layer], 5 * len(self.message))
+        log = ""
         for i in range(1, len(self.message) + 1):
             for j in range(1, 6):
                 key = self.key.deriveKeys(self.key.keys[layer][-(j + (i - 1) * 5)], 3)
                 self.message[-i] = self.func.xor(key[2], self.message[-i])
                 self.message[-i] = self.func.funcKeyDecode[(j-1)%len(self.func.funcKeyDecode)](self.message[-i] , key[1])
                 self.message[-i] = self.func.xor(key[0], self.message[-i])
+
+        logs = open('LOGSDEUX.txt', 'w', encoding="utf-8")
+        logs.write(log)
     
     def mainLoop(self):
         self.key.keys[1] = self.key.deriveKeys(self.key.keyBase[1], 16 * len(self.message))
@@ -298,7 +316,7 @@ class Decrypt:
                 self.message[-i] = self.func.xor(key[2], self.message[-i])
                 self.message[-i] = self.func.funcKeyDecode[self.vecInit[1][-(j + (i-1) * 16)]](self.message[-i], key[1])
                 for k in range(1, 6):
-                    self.message[-i] = self.func.funcDecode[self.vecInit[0][-((j-1)*5 + k + (i-1) * 16 * 5)]](self.message[-i])
+                     self.message[-i] = self.func.funcDecode[self.vecInit[0][-((j-1)*5 + k + (i-1) * 16 * 5)]](self.message[-i])
                 self.message[-i] = self.func.xor(key[0], self.message[-i])
 
 
@@ -318,13 +336,10 @@ class Decrypt:
             self.message = self.message[spliter2+1:]
             self.vecInit = [[int(vectorlst[0][i:i+2]) for i in range(0, len(vectorlst[0]), 2)], [int(vectorlst[1][i:i+2]) for i in range(0, len(vectorlst[1]), 2)]]
         else:message = [0, 0]
-        idx = int(self.message[0:4], 16)
+        idxlen = int(self.message[0:4], 16)
         message = self.message[4:]
-        assert len(message)%idx == 0, "Message non divisible"
-        sizeMessage = len(message) / idx
-        messageLst = [message[i:i+int(sizeMessage)] for i in range(0, len(message), int(sizeMessage))]
-        self.message = [chaine.lstrip('0') if len(chaine.lstrip('0'))%2 == 0 else "0" + chaine.lstrip('0') for chaine in messageLst]
-
+        messageLst = [message[i:i+int(idxlen)] for i in range(0, len(message), int(idxlen))]
+        self.message = messageLst
 
 def argument() -> None:
     argParser = ArgumentParser()
@@ -339,7 +354,7 @@ def argument() -> None:
     mode = 1 if str(args.mode).lower() == 'd' or str(args.mode).lower() == 'decrypt' else 0
     if mode == 0:
         time1 = time.time()
-        message = [message[i:i+16] for i in range(0, len(message), 16)]
+        message = [message[i:i+256] for i in range(0, len(message), 256)]
         for i in range(len(message)):
             message[i] = Encrypt(KEY, message[i])
         file = open('chiff.txt', 'w', encoding="utf-8")
@@ -353,9 +368,6 @@ def argument() -> None:
         file = open('dechi.txt', 'w', encoding="utf-8")
         file.write(''.join([i.message for i in message]))
         print(round(time.time()-time1, 2), 'sec')
-
-        
-
 
 if __name__ == '__main__':
     argument()
