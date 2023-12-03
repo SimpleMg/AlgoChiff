@@ -45,15 +45,6 @@ class allFunc:
         for i in range(len(a)):
             res += str(int(a[i]) ^ int(b[i]))
         return self.binToHex(res)
-    
-    def isPrime(self, n):
-        return n > 1 and all(n % i != 0 for i in range(2, int(n**0.5) + 1))
-
-    def nextPrimeNumber(self, nombre):
-        if nombre < 2:return nombre
-        superieur = nombre + 1
-        while not self.isPrime(superieur):superieur += 1
-        return superieur
 
     #Fonction de conversion
     def stringToInt(self, text):
@@ -258,20 +249,17 @@ class Encrypt:
             return self.key.deriveKeys(key, 1, len(message))[0]
     
     def concatenationMessage(self, vector=None):
-        res = self.message
-        lenMax = len(max(res, key=len))
-        lenMax = self.func.nextPrimeNumber(lenMax)
-        res = [i.zfill(lenMax) for i in res]
-        res = str(len(res)) + "".join(res)
+        concat = self.message
+        maxLen = len(max(concat, key=len))
+        concat = [concat[i].zfill(maxLen) for i in range(len(concat))]
+        lenMess = hex(len(self.message))[2:].zfill(4)
+        concat = lenMess + "".join(concat)
         if vector:
             vec = ''
             for i in vector[0]:vec += str(i).zfill(2)
             vec += str(len(self.func.func))
             for i in vector[1]:vec += str(i).zfill(2)
-        self.message =  res if not vector else vec + str(len(self.func.func)) + res
-
-
-
+        self.message =  concat if not vector else vec + str(len(self.func.func)) + concat
 
 class Decrypt:
     def __init__(self, KEY, message):
@@ -320,7 +308,6 @@ class Decrypt:
                 self.message[-i] = self.func.xor(key[0], self.message[-i])
 
 
-
     def adaptationKey(self, message, key):
         if len(key) == len(message):
             return key
@@ -328,29 +315,27 @@ class Decrypt:
             return self.key.deriveKeys(key, 1, len(message))[0]
     
     def concatenationMessageReverse(self, vector=False):
-        message = []
+        vectorlst = []
         if vector:
             spliter = self.message.find(str(len(self.func.func)))
-            message.append(self.message[0:spliter])
+            vectorlst.append(self.message[0:spliter])
             spliter2 = self.message.find(str(len(self.func.func)), spliter + 1)
-            message.append(self.message[spliter+1:spliter2])
+            vectorlst.append(self.message[spliter+1:spliter2])
             self.message = self.message[spliter2+1:]
-            self.vecInit = [[int(message[0][i:i+2]) for i in range(0, len(message[0]), 2)], [int(message[1][i:i+2]) for i in range(0, len(message[1]), 2)]]
+            self.vecInit = [[int(vectorlst[0][i:i+2]) for i in range(0, len(vectorlst[0]), 2)], [int(vectorlst[1][i:i+2]) for i in range(0, len(vectorlst[1]), 2)]]
         else:message = [0, 0]
-        gIdx = False
-        temp = 0
-        while not gIdx:
-            temp = self.message.find('0', temp)
-            if len(self.message[temp:])%int(self.message[0:temp]) == 0:
-                message.append(self.message[0:temp])
-                message.append(self.message[temp:])
-                gIdx = True
-        nbr_block = int(message[2])
-        res = [message[3][i:i+int(len(message[3])/nbr_block)] for i in range(0, len(message[3]), int(len(message[3])/nbr_block))]
-        self.message = [chaine.lstrip('0') if len(chaine.lstrip('0'))%2 == 0 else "0" + chaine.lstrip('0') for chaine in res]
+        idx = int(self.message[0:4], 16)
+        message = self.message[4:]
+        assert len(message)%idx == 0, "Message non divisible"
+        sizeMessage = len(message) / idx
+        messageLst = [message[i:i+int(sizeMessage)] for i in range(0, len(message), int(sizeMessage))]
+        self.message = [chaine.lstrip('0') if len(chaine.lstrip('0'))%2 == 0 else "0" + chaine.lstrip('0') for chaine in messageLst]
 
-        
-
+# mess = "Mais salope le voila ton message laaaa !"
+# KEY = "ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff"
+# encrypt = Encrypt(KEY, mess)
+# decrypt =  Decrypt(KEY, encrypt.message)
+# print(decrypt.message)
 
 
 def argument() -> None:
