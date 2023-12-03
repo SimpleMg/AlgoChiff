@@ -287,7 +287,6 @@ class Encrypt:
         self.concatenationMessage(self.vecInit)
         self.splitMessage()
         self.layer(2)
-        #print(self.func.xor("fedf12834c0881b469d5116cbf273aeab2e75bf8386c6c6ccea795e3c61ee5e7d7a9f448d488fd5787912b60fc00c523ff38fdf7f3be0e4c2ad777552b945fb4447e342db24fee30bbafa3be385999817b4edca8b0871ce469f00308119fa86e2e0ae4af27434a1f8f752a6eded5d9d744af376a411d2a38032d8a48c3839f60f95ac4d9c18c9f8cf88c43b2fe1ef39a92db80fb26e01abb088998c35b441d7607d4e9ae9f8a77dda0d496fc08e724f49bee","1862f2909dc48fa8fe6c48be3322787642b4c59e162f5442cdd6020595712b16"))
         b = Decrypt("ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff", self.message)
         
         
@@ -366,6 +365,7 @@ class Encrypt:
             vec += str(len(self.func.func))
             for i in vector[1]:vec += str(i).zfill(2)
         self.message =  res if not vector else vec + str(len(self.func.func)) + res
+        print(self.message)
 
 
 
@@ -376,10 +376,10 @@ class Decrypt:
         self.func = allFunc()
         self.message = message
         self.initialisationKeys()
+        print("\n\n\nDECRIPTAGE EN COUR !!!!!!!!!!!!!!!!!")
         self.layer(2)
         self.splitMessageReverse()
         self.concatenationMessageReverse(True)
-        print("\n\n\nDECRIPTAGE EN COUR !!!!!!!!!!!!!!!!!")
         self.mainLoop()
         self.splitMessageReverse()
         self.concatenationMessageReverse()
@@ -441,6 +441,7 @@ class Decrypt:
             return self.key.deriveKeys(key, 1, len(message))[0]
     
     def concatenationMessageReverse(self, vector=False):
+        print(self.message)
         message = []
         if vector:
             spliter = self.message.find(str(len(self.func.func)))
@@ -450,8 +451,10 @@ class Decrypt:
             self.message = self.message[spliter2+1:]
             self.vecInit = [[int(message[0][i:i+2]) for i in range(0, len(message[0]), 2)], [int(message[1][i:i+2]) for i in range(0, len(message[1]), 2)]]
         else:message = [0, 0]
+        print("\n\nvecteur:", self.vecInit)
         gIdx = False
         temp = 0
+        print("\n\nreste message:", self.message)
         while not gIdx:
             temp = self.message.find('0', temp)
             if len(self.message[temp:])%int(self.message[0:temp]) == 0:
@@ -465,7 +468,7 @@ class Decrypt:
         
 
 
-toEncrypt = Encrypt("ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff", "0azdad0zaza")
+toEncrypt = Encrypt("ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff", "martin")
 
 
 
