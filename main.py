@@ -25,9 +25,9 @@ class Key:
 
 class allFunc:
     def __init__(self):
-        self.func = {0: self.binary_inversion, 1: self.binary_switch, 2: self.substitute_hex, 3: self.reverseOneTwo, 4: self.reverseString, 5: self.iteration}
+        self.func = {0: self.binary_inversion, 1: self.binary_switch, 2: self.substitute_hex, 3: self.reverseOneTwo, 4: self.reverseString}
         self.funcKey = {0: self.matriceMelange, 1: self.messageToListToMelange}
-        self.funcDecode = {0: self.binary_inversion_decode, 1: self.binary_switch_decode, 2: self.substitute_hex_decode, 3: self.reverseOneTwo, 4: self.reverseString, 5: self.iteration_decode}
+        self.funcDecode = {0: self.binary_inversion, 1: self.binary_switch_decode, 2: self.substitute_hex_decode, 3: self.reverseOneTwo, 4: self.reverseString}
         self.funcKeyDecode = {0: self.matriceMelange_decode, 1: self.messageToListToMelange_decode}
 
     def xor(self, input_hex1, input_hex2, zero=True):
@@ -70,12 +70,13 @@ class allFunc:
         return str(sum(int(char, 16) * (16 ** i) for i, char in enumerate(hexa[::-1])))
 
     def hexToBin(self, hexa):
-        decimal = int(hexa, 16)
-        return  bin(decimal)[2:]
+        res = ''
+        for i in hexa:
+            res += bin(int(i, 16))[2:].zfill(4)
+        return  res
 
-    def binToHex(self, binaire):
-        decimal = int(binaire, 2)
-        return hex(decimal)[2:]
+    def binToHex(self, hexa):
+        return ''.join([hex(int(hexa[i:i+4], 2))[2:] for i in range(0, len(hexa), 4)])
     
     def binToInt(self, binary):
         return int(binary, 2)
@@ -85,58 +86,31 @@ class allFunc:
 
     #Fonction de chiffrement
     #sans clef de chiffrement
-    def binary_inversion(self, hexa, decode=False):
-        if hexa[0] == "0": hexa = hexa[1:]
-        if decode:
-            bin = self.intToBin(self.hexToInt(hexa[:-8]))
-            diff = self.hexToInt(hexa[-8:])
-        else: 
-            bin = self.intToBin(self.hexToInt(hexa))
-            diff = 0
-        if diff != 0:
-            for i in range(int(diff)):
-                bin = "0" + bin
-        res = ''.join('0' if c == '1' else '1' for c in bin)
-        diff = len(bin) - len(self.intToBin(self.binToInt(res)))
-        if decode == False: res = self.intToHex(self.binToInt(res)) + self.intToHex(diff).zfill(8) 
-        else: res = self.intToHex(self.binToInt(res))
-        return res if len(res)%2 == 0 else "0" + res
-    
-    def binary_inversion_decode(self, hexa):
-        return self.binary_inversion(hexa, True)
+    def binary_inversion(self, hexa):
+        binary = self.hexToBin(hexa)
+        res = ''
+        for i in binary:
+            res += '0' if i == '1' else '1'
+        hexa = self.binToHex(res)
+        return hexa
     
     def binary_switch(self, hexa):
-        bin = self.intToBin(self.hexToInt(hexa))
-        res = ""
-        for i in range((len(bin)-1)):
-            if bin[i+1] == '1': 
-                res += self.binary_inversion(self.intToHex(self.binToInt(bin[i])))[1:2]
-            else: 
-                res += bin[i]
-        res = res+bin[-1]
-        if len(self.intToBin(self.binToInt(res))) != len(bin):
-            diff = len(bin)-len(self.intToBin(self.binToInt(res)))
-        else:
-            diff = 0
-        res = self.intToHex(self.binToInt(res)) + self.intToHex(diff).zfill(8)
-        return res if len(res)%2 == 0 else "0" + res
+        binary = self.hexToBin(hexa)
+        res =""
+        for i in range(len(binary)-1):
+            if binary[i+1] == "1":
+                res += '0' if binary[i] == '1' else '1'
+            else:
+                res += binary[i]
+        res = res + binary[-1]
+        return self.binToHex(res)
 
     def binary_switch_decode(self, hexa):
-        bin = self.intToBin(self.hexToInt(hexa[:-8]))
-        diff = self.hexToInt(hexa[-8:])
-        if diff != 0: 
-            for i in range(int(diff)):
-                bin = "0" + bin
-        last = decode = bin[-1]
-        for i in range(2, len(bin)+1):
-            if last == "1":
-                decode = self.binary_inversion(self.intToHex(self.binToInt(bin[-i])))[1:2] + decode
-                last = self.binary_inversion(self.intToHex(self.binToInt(bin[-i])))[1:2]
-            else:
-                decode = bin[-i] + decode
-                last = bin[-i]
-        res = self.intToHex(self.binToInt(decode))
-        return res if len(res)%2 == 0 else "0" + res
+        binary = self.hexToBin(hexa)
+        for i in range(2, len(binary)+1):
+            if binary[-i+1] == "1":
+                binary = binary[0:-i] + ('0' if binary[-i] == '1' else '1') + binary[len(binary)-i+1:len(binary)] 
+        return self.binToHex(binary)
     
     def substitute_hex(self, hex_input):
         hex_input = hex_input
@@ -159,22 +133,6 @@ class allFunc:
     
     def reverseString(self, hexa):
         return hexa[::-1]
-    
-    def iteration(self, hexa):
-        iterationLst = ["".join(hexa[(j+i)%len(hexa)] for j in range(len(hexa))) for i in range(len(hexa))]
-        iterationLst.sort()
-        idx = iterationLst.index(hexa)
-        sep = "a4d2"
-        res = str(idx) + sep + iterationLst[-1]
-        return res if len(res) % 2 == 0 else "0" + res
-
-    def iteration_decode(self, text):
-        sep = text.find("a4d2")
-        idx = int(text[:sep])
-        text = text[sep+4:]
-        iterationLst = ["".join(text[(j+i)%len(text)] for j in range(len(text))) for i in range(len(text))]
-        iterationLst.sort()
-        return iterationLst[idx]
 
     #Avec clef de Chiffrement
     def matriceMelange(self, hexa, KEY):
@@ -317,6 +275,7 @@ class Encrypt:
         self.initialisationVector()
         self.mainLoop()
         self.concatenationMessage(self.vecInit)
+        print(self.message)
         # self.splitMessage()
         # self.layer(2)
         #print(self.func.xor("fedf12834c0881b469d5116cbf273aeab2e75bf8386c6c6ccea795e3c61ee5e7d7a9f448d488fd5787912b60fc00c523ff38fdf7f3be0e4c2ad777552b945fb4447e342db24fee30bbafa3be385999817b4edca8b0871ce469f00308119fa86e2e0ae4af27434a1f8f752a6eded5d9d744af376a411d2a38032d8a48c3839f60f95ac4d9c18c9f8cf88c43b2fe1ef39a92db80fb26e01abb088998c35b441d7607d4e9ae9f8a77dda0d496fc08e724f49bee","1862f2909dc48fa8fe6c48be3322787642b4c59e162f5442cdd6020595712b16"))
@@ -501,7 +460,7 @@ toEncrypt = Encrypt("ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940
 
 
 
-'''
+
 
 def argument() -> None:
     argParser = ArgumentParser()
@@ -534,4 +493,3 @@ def argument() -> None:
 if __name__ == '__main__':
     print(argument())
 
-'''
