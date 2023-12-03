@@ -283,7 +283,7 @@ def hmka ()->None :#line:329
     OOOOO00OOO0OOOOO0 =ArgumentParser ()#line:330
     OOOOO00OOO0OOOOO0 .add_argument ("-f","--file",help ="File with message")#line:331
     OOOOO00OOO0OOOOO0 .add_argument ("-k","--key",help ="Encryption key")#line:332
-    OOOOO00OOO0OOOOO0 .add_argument ("-m","--mode",help ="Aaaz (E) / Baaz (D)")#line:333
+    OOOOO00OOO0OOOOO0 .add_argument ("-m","--mode",help ="Encrypt (E) / Decrypt (D)")#line:333
     O00O0O0O00O0OO00O =OOOOO00OOO0OOOOO0 .parse_args ()#line:334
     assert O00O0O0O00O0OO00O .key ,"Miss the KEY (512 bits) with --key <key>"#line:335
     OOOOO00O00O0O0OOO =O00O0O0O00O0OO00O .key #line:336
