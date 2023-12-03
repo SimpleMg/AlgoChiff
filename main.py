@@ -1,9 +1,7 @@
 import random
 import hashlib
 import secrets
-import numpy
-import math
-import base64
+import time
 from argparse import ArgumentParser
 
 from cryptography.hazmat.primitives import hashes
@@ -26,10 +24,8 @@ class allFunc:
     def __init__(self):
         self.func = {0: self.binary_inversion, 1: self.binary_switch, 2: self.substitute_hex, 3: self.reverseOneTwo, 4: self.reverseString}
         self.funcKey = {0: self.matriceMelange, 1: self.messageToListToMelange}
-        # self.funcKey = {0: self.matriceMelange, 1: self.messageToListToMelange}
         self.funcDecode = {0: self.binary_inversion, 1: self.binary_switch_decode, 2: self.substitute_hex_decode, 3: self.reverseOneTwo, 4: self.reverseString}
         self.funcKeyDecode = {0: self.matriceMelange_decode, 1: self.messageToListToMelange_decode}
-        # self.funcKeyDecode = {0: self.matriceMelange_decode, 1: self.messageToListToMelange_decode}
 
     def xor(self, key, msg):
         if len(key) > len(msg):
@@ -195,9 +191,7 @@ class Encrypt:
         self.concatenationMessage(self.vecInit)
         self.splitMessage()
         self.layer(2)
-        self.concatenationMessage()
-        #decrypt = Decrypt("ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff", self.message)
-        
+        self.concatenationMessage()        
         
     def splitMessage(self, first=False):
         if first:
@@ -331,12 +325,6 @@ class Decrypt:
         messageLst = [message[i:i+int(sizeMessage)] for i in range(0, len(message), int(sizeMessage))]
         self.message = [chaine.lstrip('0') if len(chaine.lstrip('0'))%2 == 0 else "0" + chaine.lstrip('0') for chaine in messageLst]
 
-# mess = "Mais salope le voila ton message laaaa !"
-# KEY = "ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff"
-# encrypt = Encrypt(KEY, mess)
-# decrypt =  Decrypt(KEY, encrypt.message)
-# print(decrypt.message)
-
 
 def argument() -> None:
     argParser = ArgumentParser()
@@ -348,20 +336,23 @@ def argument() -> None:
     KEY = args.key
     assert args.file, "Miss file path with --file <path>"
     message = open(args.file, 'r', encoding="utf-8").read()
-    
-    mode = 1 if args.mode == 'D' or args.mode == 'Decrypt' else 0
+    mode = 1 if str(args.mode).lower() == 'd' or str(args.mode).lower() == 'decrypt' else 0
     if mode == 0:
-        message = [message[i:i+32] for i in range(0, len(message), 32)]
+        time1 = time.time()
+        message = [message[i:i+16] for i in range(0, len(message), 16)]
         for i in range(len(message)):
             message[i] = Encrypt(KEY, message[i])
         file = open('chiff.txt', 'w', encoding="utf-8")
         file.write('|'.join([i.message for i in message]))
+        print(round(time.time()-time1, 2), 'sec')
     else:
+        time1 = time.time()
         message = message.split('|')
         for i in range(len(message)):
             message[i] = Decrypt(KEY, message[i])
         file = open('dechi.txt', 'w', encoding="utf-8")
         file.write(''.join([i.message for i in message]))
+        print(round(time.time()-time1, 2), 'sec')
 
         
 
