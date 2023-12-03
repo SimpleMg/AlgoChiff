@@ -23,11 +23,9 @@ class Key:
 class allFunc:
     def __init__(self):
         self.func = {0: self.binary_inversion, 1: self.binary_switch, 2: self.substitute_hex, 3: self.reverseOneTwo, 4: self.reverseString}
-        self.funcKey = {0: self.matriceMelange}
-        # self.funcKey = {0: self.matriceMelange, 1: self.messageToListToMelange}
+        self.funcKey = {0: self.matriceMelange, 1: self.messageToListToMelange}
         self.funcDecode = {0: self.binary_inversion, 1: self.binary_switch_decode, 2: self.substitute_hex_decode, 3: self.reverseOneTwo, 4: self.reverseString}
-        self.funcKeyDecode = {0: self.matriceMelange_decode}
-        # self.funcKeyDecode = {0: self.matriceMelange_decode, 1: self.messageToListToMelange_decode}
+        self.funcKeyDecode = {0: self.matriceMelange_decode, 1: self.messageToListToMelange_decode}
 
     def xor(self, key, msg):
         if len(key) > len(msg):
@@ -195,8 +193,6 @@ class Encrypt:
         self.splitMessage()
         self.layer(2)
         self.concatenationMessage()
-        #decrypt = Decrypt("ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff", self.message)
-        
         
     def splitMessage(self, first=False):
         if first:
@@ -223,21 +219,12 @@ class Encrypt:
 
     def layer(self, layer):
         self.key.keys[layer] = self.key.deriveKeys(self.key.keyBase[layer], 5 * len(self.message))
-        log1 = ""
         for i in range(len(self.message)):
-            log1 += ("\n\nI : " + str(i))
             for j in range(5):
-                log1 += ("\nJ : " + str(j))
                 key = self.key.deriveKeys(self.key.keys[layer][j + i * 5], 3)
-                log1 += ("\nInit: " + self.message[i])
                 self.message[i] = self.func.xor(key[0], self.message[i])
-                log1 += ("\nXOR 1: " + self.message[i])
                 self.message[i] = self.func.funcKey[j%len(self.func.funcKey)](self.message[i], key[1])
-                log1 += ("\nChiff: " + self.message[i])
                 self.message[i] = self.func.xor(key[2], self.message[i])
-                log1 += ("\nXOR 2: " + self.message[i])
-        file = open('LOGS.txt', 'w', encoding="utf-8")
-        file.write(log1)
 
     def mainLoop(self):
         self.key.keys[1] = self.key.deriveKeys(self.key.keyBase[1], 16 * len(self.message))
@@ -297,16 +284,12 @@ class Decrypt:
     
     def layer(self, layer):
         self.key.keys[layer] = self.key.deriveKeys(self.key.keyBase[layer], 5 * len(self.message))
-        log = ""
         for i in range(1, len(self.message) + 1):
             for j in range(1, 6):
                 key = self.key.deriveKeys(self.key.keys[layer][-(j + (i - 1) * 5)], 3)
                 self.message[-i] = self.func.xor(key[2], self.message[-i])
                 self.message[-i] = self.func.funcKeyDecode[(j-1)%len(self.func.funcKeyDecode)](self.message[-i] , key[1])
                 self.message[-i] = self.func.xor(key[0], self.message[-i])
-
-        logs = open('LOGSDEUX.txt', 'w', encoding="utf-8")
-        logs.write(log)
     
     def mainLoop(self):
         self.key.keys[1] = self.key.deriveKeys(self.key.keyBase[1], 16 * len(self.message))
@@ -341,15 +324,20 @@ class Decrypt:
         messageLst = [message[i:i+int(idxlen)] for i in range(0, len(message), int(idxlen))]
         self.message = messageLst
 
-def argument() -> None:
+def argument():
     argParser = ArgumentParser()
     argParser.add_argument("-f", "--file", help="File with message")
     argParser.add_argument("-k", "--key", help="Encryption key")
     argParser.add_argument("-m", "--mode", help="Encrypt (E) / Decrypt (D)")
     args = argParser.parse_args()
-    assert args.key, "Miss the KEY (512 bits) with --key <key>"
-    KEY = args.key
+
     assert args.file, "Miss file path with --file <path>"
+    if args.key:
+        KEY = args.key
+        print("\n")
+    else:
+        KEY = hex(secrets.randbits(512))[2:]
+        print("\nVoicie votre clef de chiffrement, veuillez la concerver en toute discretion: ", KEY)
     message = open(args.file, 'r', encoding="utf-8").read()
     mode = 1 if str(args.mode).lower() == 'd' or str(args.mode).lower() == 'decrypt' else 0
     if mode == 0:
@@ -357,17 +345,17 @@ def argument() -> None:
         message = [message[i:i+256] for i in range(0, len(message), 256)]
         for i in range(len(message)):
             message[i] = Encrypt(KEY, message[i])
-        file = open('chiff.txt', 'w', encoding="utf-8")
+        file = open('crypted.txt', 'w', encoding="utf-8")
         file.write('|'.join([i.message for i in message]))
-        print(round(time.time()-time1, 2), 'sec')
+        print("Chiffrement éxécuté en", round(time.time()-time1, 2), 'sec\n')
     else:
         time1 = time.time()
         message = message.split('|')
         for i in range(len(message)):
             message[i] = Decrypt(KEY, message[i])
-        file = open('dechi.txt', 'w', encoding="utf-8")
+        file = open('decrypted.txt', 'w', encoding="utf-8")
         file.write(''.join([i.message for i in message]))
-        print(round(time.time()-time1, 2), 'sec')
+        print("Déchiffrement éxécuté en", round(time.time()-time1, 2), 'sec\n')
 
 if __name__ == '__main__':
     argument()
