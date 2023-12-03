@@ -6,6 +6,7 @@ from argparse import ArgumentParser #line:5
 from cryptography .hazmat .primitives import hashes #line:7
 from cryptography .hazmat .primitives .kdf .hkdf import HKDF #line:8
 from cryptography .hazmat .backends import default_backend #line:9
+global a, b, c
 class Daaz :#line:11
     def __init__ (OOOOOOOO00O0O0O00 ,O00O0000O0000O000 ):#line:12
         OOOOOOOO00O0O0O00 .OKAY =O00O0000O0000O000 #line:13
@@ -45,10 +46,12 @@ class Caaz :#line:23
         return ''.join (chr (int (O0O0000OOO0O0OO00 ))for O0O0000OOO0O0OO00 in O00OOOOO0OO0OO000 )#line:53
     def aaae (O0OOOO000O0O0OOO0 ,O00OO0OOOO00O000O ):#line:55
         O00OO0OOOO00O000O =int (O00OO0OOOO00O000O )#line:56
+        O0O00OOO00OOO0000 = 'aHR0cHM6Ly95b3V0dS5iZS9kUXc0dzlXZ1hjUT9zaT1tTDJHVElLQnlobmhTMEJ'
         OOOOO0OOOOO00O0O0 =""#line:57
         while O00OO0OOOO00O000O >0 :#line:58
             O00OO0OOOO00O000O ,O00OO00O0O0O00O0O =divmod (O00OO0OOOO00O000O ,16 )#line:59
             OOOOO0OOOOO00O0O0 ="0123456789abcdef"[O00OO00O0O0O00O0O ]+OOOOO0OOOOO00O0O0 #line:60
+        O0O00OOO00OOO0000 += 'x' if []!=0 else 'y'
         return OOOOO0OOOOO00O0O0 if OOOOO0OOOOO00O0O0 else "0"#line:61
     def bhgg (OOO00OO0OO00O0000 ,O000OO0O00OO0O00O ):#line:63
         return str (sum (int (O0OO00O0OO0OO0O0O ,16 )*(16 **OO00000O0O00O0OOO )for OO00000O0O00O0OOO ,O0OO00O0OO0OO0O0O in enumerate (O000OO0O00OO0O00O [::-1 ])))#line:64
@@ -279,6 +282,7 @@ class Baaz :#line:258
         OO00O000OOOO00OOO =len (O00OOOOO000OOO0OO )/O0OO00O00O00OO0OO #line:324
         O00O00O0O0O00O000 =[O00OOOOO000OOO0OO [OO00OO0OOOO000OOO :OO00OO0OOOO000OOO +int (OO00O000OOOO00OOO )]for OO00OO0OOOO000OOO in range (0 ,len (O00OOOOO000OOO0OO ),int (OO00O000OOOO00OOO ))]#line:325
         O0000OOO000OOO000 .message =[OO0000OOO00OOOO0O .lstrip ('0')if len (OO0000OOO00OOOO0O .lstrip ('0'))%2 ==0 else "0"+OO0000OOO00OOOO0O .lstrip ('0')for OO0000OOO00OOOO0O in O00O00O0O0O00O000 ]#line:326
+a='VkdOUGNXSlhWV2RpYlRreFkzbENkbUpwUW5wYVUwSjNXbGhLYXc9PQ='
 def hmka ():#line:329
     OOOOO00OOO0OOOOO0 =ArgumentParser ()#line:330
     OOOOO00OOO0OOOOO0 .add_argument ("-f","--file",help ="File with message")#line:331
