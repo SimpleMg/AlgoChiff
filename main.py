@@ -10,7 +10,6 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.backends import default_backend
 
-
 class Key:
     def __init__(self, key):
         self.KEY = key
@@ -26,10 +25,10 @@ class Key:
 class allFunc:
     def __init__(self):
         self.func = {0: self.binary_inversion, 1: self.binary_switch, 2: self.substitute_hex, 3: self.reverseOneTwo, 4: self.reverseString}
-        self.funcKey = {0: self.matriceMelange, 1: self.messageToListToMelange}
+        self.funcKey = {0: self.matriceMelange}
         # self.funcKey = {0: self.matriceMelange, 1: self.messageToListToMelange}
         self.funcDecode = {0: self.binary_inversion, 1: self.binary_switch_decode, 2: self.substitute_hex_decode, 3: self.reverseOneTwo, 4: self.reverseString}
-        self.funcKeyDecode = {0: self.matriceMelange_decode, 1: self.messageToListToMelange_decode}
+        self.funcKeyDecode = {0: self.matriceMelange_decode}
         # self.funcKeyDecode = {0: self.matriceMelange_decode, 1: self.messageToListToMelange_decode}
 
     def xor(self, key, msg):
@@ -144,15 +143,22 @@ class allFunc:
 
     #Avec clef de Chiffrement
     def matriceMelange(self, hexa, KEY):
-        if len(hexa)%2 != 0: hexa = '0' + hexa
+        if len(hexa)%2 != 0: 
+            hexa = '0' + hexa
+            zero = True
+        else: zero = False
         hexaForm = [format(i, '02x') for i in range(256)]
         random.seed(KEY)
         random.shuffle(hexaForm)
         matrice = [hexaForm[i:i+16] for i in range(0, 256, 16)]
-        return ''.join(matrice[int(hexa[i], 16)][int(hexa[i + 1], 16)] for i in range(0, len(hexa), 2))
+        res = "".join(matrice[int(hexa[i], 16)][int(hexa[i + 1], 16)] for i in range(0, len(hexa), 2))
+        if zero == True: res = "ff" + res
+        else: res = "ee" + res
+        return res
     
     def matriceMelange_decode(self, hexa, KEY):
-        hexa = ("0" + hexa) if len(hexa)%2 != 0 else hexa
+        if hexa[:2] == "ff": zero = True
+        elif hexa[:2] == "ee": zero = False
         hexaForm = [format(i, '02x') for i in range(256)]
         random.seed(KEY)
         random.shuffle(hexaForm)
@@ -161,6 +167,8 @@ class allFunc:
         for k in range(0, len(hexa), 2):
             idx = [(i, j) for i, row in enumerate(matrice) for j, val in enumerate(row) if val == hexa[k]+hexa[k+1]][0]
             res += hex(idx[0])[-1:] + hex(idx[1])[-1:]
+        if zero == True: res = res[3:]
+        else: res = res[2:]
         return res
     
     def messageToListToMelange(self, hexa, KEY):
@@ -179,96 +187,6 @@ class allFunc:
         for idx, v in enumerate(index):
             res[int(v)] = hexa[idx]
         return ''.join(res)
-    
-    def multMatrice(self, hexa, KEY):
-        mtcHexa = []
-        hexaLst = []
-        mtcSizeLine = math.ceil(math.sqrt(len(hexa)/2))
-        mtcSize = pow(mtcSizeLine, 2)
-        hexa = hexa.zfill(mtcSize*2)
-        for i in range(len(hexa)):
-            if i%2 == 0:
-                hexaLst.append(hexa[i] + hexa[i+1])
-        for i in range(mtcSize):
-            mtcLine = []
-            if i%mtcSizeLine == 0:
-                j = 0
-                while j < mtcSizeLine:
-                    mtcLine.append(hexaLst[i+j])
-                    j += 1
-                mtcHexa.append(mtcLine)
-        mtcMultHexa = [format(i, '02x') for i in range(mtcSize)]
-        random.seed(KEY)
-        random.shuffle(mtcMultHexa)
-        mtcMult = [mtcMultHexa[i:i+mtcSizeLine] for i in range(0, mtcSize, mtcSizeLine)]
-        for i in range(len(mtcMult)):
-            for j in range(len(mtcMult[i])):
-                mtcMult[i][j] = int(mtcMult[i][j], base=16)
-        for i in range(len(mtcHexa)):
-            for j in range(len(mtcHexa[i])):
-                mtcHexa[i][j] = int(mtcHexa[i][j], base=16)
-        mtcMultNumpy = numpy.array(mtcMult)
-        mtchexaNumpy = numpy.array(mtcHexa)
-        mtcResult = numpy.dot(mtcMultNumpy,mtchexaNumpy)
-        mtcResult = list(mtcResult)
-        for i in range(len(mtcResult)):
-            mtcResult[i] = list(mtcResult[i])
-        for i in range(len(mtcResult)):
-            for j in range(len(mtcResult[i])):
-                mtcResult[i][j] = hex(mtcResult[i][j].item())
-                mtcResult[i][j] = mtcResult[i][j][2:].zfill(6)
-        result = ""
-        for i in range(len(mtcResult)):
-            for j in range(len(mtcResult[i])):
-                result += mtcResult[i][j]
-        return result
-    
-    def multMatrice_decode(self, hexa, KEY):
-        toDecodeTbl = []
-        toDecodeMtc = []
-        for i in range(len(hexa)):
-            if i%6 == 0:
-                toDecodeTbl.append(hexa[i] + hexa[i+1] + hexa[i+2] + hexa[i+3] + hexa[i+4] + hexa[i+5])
-        mtcSizeLine = math.sqrt(len(toDecodeTbl))
-        for i in range(len(toDecodeTbl)):
-            mtcLine = []
-            if i%mtcSizeLine == 0:
-                j = 0
-                while j < mtcSizeLine:
-                    mtcLine.append(toDecodeTbl[i+j])
-                    j += 1
-                toDecodeMtc.append(mtcLine)
-        mtcSize = pow(len(toDecodeMtc), 2)
-        mtcDivHexa = [format(i, '02x') for i in range(mtcSize)]
-        random.seed(KEY)
-        random.shuffle(mtcDivHexa)
-        mtcDiv = [mtcDivHexa[i:i+int(mtcSizeLine)] for i in range(0, mtcSize, int(mtcSizeLine))]
-        for i in range(len(toDecodeMtc)):
-            for j in range(len(toDecodeMtc[i])):
-                toDecodeMtc[i][j] = int(toDecodeMtc[i][j], base=16)
-        for i in range(len(mtcDiv)):
-            for j in range(len(mtcDiv[i])):
-                mtcDiv[i][j] = int(mtcDiv[i][j], base=16)
-        toDecodeMtcNumpy = numpy.array(toDecodeMtc)
-        mtcDivNumpy = numpy.array(mtcDiv)
-        mtcDivNumpyInverse = numpy.linalg.inv(mtcDivNumpy)
-        mtcResultNumpy = numpy.dot(mtcDivNumpyInverse, toDecodeMtcNumpy)
-        mtcResult = list(mtcResultNumpy)
-        for i in range(len(mtcResult)):
-            mtcResult[i] = list(mtcResult[i])
-        for i in range(len(mtcResult)):
-            for j in range(len(mtcResult[i])):
-                mtcResult[i][j] = hex(round(mtcResult[i][j]))
-                mtcResult[i][j] = mtcResult[i][j][2:]
-        result = ""
-        for i in range(len(mtcResult)):
-            for j in range(len(mtcResult[i])):
-                result += mtcResult[i][j]
-        result = result.lstrip("0")
-        if len(result)%2 != 0:
-            result = "0" + result
-        return result
-    
 
 class Encrypt:
     def __init__(self, KEY, message):
@@ -281,13 +199,13 @@ class Encrypt:
         self.layer(0)
         self.concatenationMessage()
         self.splitMessage()
-        print(self.message)
         self.initialisationVector()
         self.mainLoop()
         self.concatenationMessage(self.vecInit)
         self.splitMessage()
         self.layer(2)
-        b = Decrypt("ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff", self.message)
+        self.concatenationMessage()
+        #decrypt = Decrypt("ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff", self.message)
         
         
     def splitMessage(self, first=False):
@@ -325,26 +243,12 @@ class Encrypt:
     def mainLoop(self):
         self.key.keys[1] = self.key.deriveKeys(self.key.keyBase[1], 16 * len(self.message))
         for i in range(len(self.message)):
-            print("\n----------\nI: ", i)
             for j in range(16):
-                print("\n     J: ", j)
                 key = self.key.deriveKeys(self.key.keys[1][j + i * 16], 3)
                 self.message[i] = self.func.xor(key[0], self.message[i])
                 for k in range(5):
-                    print("\n          K: ", k)
-                    print("\n          Fonction de Chiffrement sans Clef:")
-                    print("          Fonction numéro: ", self.vecInit[0][j*5 + k + i * 16 * 5])
-                    print("          Indice dans le vecteur: ", j*5 + k + i * 16 * 5)
-                    print("          Message à chiffrer: ", self.message[i])
                     self.message[i] = self.func.func[self.vecInit[0][j*5 + k + i * 16 * 5]](self.message[i])
-                    print("          Message chiffré: ", self.message[i])
-                print("\n     Fonction de Chiffrement avec Clef:")
-                print("     Fonction numéro: ", self.vecInit[1][j + i * 16])
-                print("     Indice dans le vecteur: ", j + i * 16)
-                print("     Message à chiffrer: ", self.message[i])
-                print("     Clef de chiffrement: ", key[1])
                 self.message[i] = self.func.funcKey[self.vecInit[1][j + i * 16]](self.message[i], key[1])
-                print("     Résultat chiffré: ", self.message[i])
                 self.message[i] = self.func.xor(key[2], self.message[i])
     
     def adaptationKey(self, message, key):
@@ -365,7 +269,6 @@ class Encrypt:
             vec += str(len(self.func.func))
             for i in vector[1]:vec += str(i).zfill(2)
         self.message =  res if not vector else vec + str(len(self.func.func)) + res
-        print(self.message)
 
 
 
@@ -376,7 +279,7 @@ class Decrypt:
         self.func = allFunc()
         self.message = message
         self.initialisationKeys()
-        print("\n\n\nDECRIPTAGE EN COUR !!!!!!!!!!!!!!!!!")
+        self.concatenationMessageReverse()
         self.layer(2)
         self.splitMessageReverse()
         self.concatenationMessageReverse(True)
@@ -384,9 +287,7 @@ class Decrypt:
         self.splitMessageReverse()
         self.concatenationMessageReverse()
         self.layer(0)
-        print(self.message)
         self.splitMessageReverse(True)
-        print("Résultats: ", self.message)
         
     def splitMessageReverse(self, first=False):
         if first:
@@ -410,26 +311,12 @@ class Decrypt:
     def mainLoop(self):
         self.key.keys[1] = self.key.deriveKeys(self.key.keyBase[1], 16 * len(self.message))
         for i in range(1, len(self.message)+1):
-            print("\n----------\nI: ", i)
             for j in range(1, 17):
-                print("\n     J: ", j)
                 key = self.key.deriveKeys(self.key.keys[1][-(j + (i - 1) * 16)], 3)
                 self.message[-i] = self.func.xor(key[2], self.message[-i])
-                print("\n     Fonction de déchiffrement avec Clef:")
-                print("     Fonction numéro: ", self.vecInit[1][-(j + (i-1) * 16)])
-                print("     Indice dans le vecteur: ", -(j + (i-1) * 16), " / ", len(self.vecInit[1])-(j + (i-1) * 16))
-                print("     Message à déchiffrer: ", self.message[-i])
-                print("     Clef de déchiffrement: ", key[1])
                 self.message[-i] = self.func.funcKeyDecode[self.vecInit[1][-(j + (i-1) * 16)]](self.message[-i], key[1])
-                print("     Résultat déchiffré: ", self.message[-i])
                 for k in range(1, 6):
-                    print("\n          K: ", k)
-                    print("\n          Fonction de déhiffrement sans Clef:")
-                    print("          Fonction numéro: ", self.vecInit[0][-((j-1)*5 + k + (i-1) * 16 * 5)])
-                    print("          Indice dans le vecteur: ", -((j-1)*5 + k + (i-1) * 16 * 5), " / ", len(self.vecInit[0])-((j-1)*5 + k + (i-1) * 16 * 5))
-                    print("          Message à déchiffrer: ", self.message[-i])
                     self.message[-i] = self.func.funcDecode[self.vecInit[0][-((j-1)*5 + k + (i-1) * 16 * 5)]](self.message[-i])
-                    print("          Message déchiffré: ", self.message[-i])
                 self.message[-i] = self.func.xor(key[0], self.message[-i])
 
 
@@ -441,7 +328,6 @@ class Decrypt:
             return self.key.deriveKeys(key, 1, len(message))[0]
     
     def concatenationMessageReverse(self, vector=False):
-        print(self.message)
         message = []
         if vector:
             spliter = self.message.find(str(len(self.func.func)))
@@ -451,10 +337,8 @@ class Decrypt:
             self.message = self.message[spliter2+1:]
             self.vecInit = [[int(message[0][i:i+2]) for i in range(0, len(message[0]), 2)], [int(message[1][i:i+2]) for i in range(0, len(message[1]), 2)]]
         else:message = [0, 0]
-        print("\n\nvecteur:", self.vecInit)
         gIdx = False
         temp = 0
-        print("\n\nreste message:", self.message)
         while not gIdx:
             temp = self.message.find('0', temp)
             if len(self.message[temp:])%int(self.message[0:temp]) == 0:
@@ -465,47 +349,57 @@ class Decrypt:
         res = [message[3][i:i+int(len(message[3])/nbr_block)] for i in range(0, len(message[3]), int(len(message[3])/nbr_block))]
         self.message = [chaine.lstrip('0') if len(chaine.lstrip('0'))%2 == 0 else "0" + chaine.lstrip('0') for chaine in res]
         
-        
+message = "Sed maximum est in aSed Sed maximum estmaxiaximum eestSed maximum est"
+KEY = "ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff"
+
+message = [message[i:i+64] for i in range(0, len(message), 64)]
+result = ""
+for i in range(len(message)):
+    encrypt = Encrypt(KEY, message[i])
+    result += encrypt.message + "|"
+    print("yo")
+result = result[:-1]
+print(result)
+
+# decrypt = Decrypt(KEY, "")
+# print(decrypt.message)
 
 
-toEncrypt = Encrypt("ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff", "martin")
+
+
+# toEncrypt = Encrypt(KEY, message)
 
 
 
 
-
-
-'''
-
-def argument() -> None:
-    argParser = ArgumentParser()
-    argParser.add_argument("-f", "--file", help="File with message")
-    argParser.add_argument("-k", "--key", help="Encryption key")
-    argParser.add_argument("-m", "--mode", help="Encrypt (E) / Decrypt (D)")
-    args = argParser.parse_args()
-    assert args.key, "Miss the KEY (512 bits) with --key <key>"
-    KEY = Key(args.key)
-    assert args.file, "Miss file path with --file <path>"
-    message = open(args.file, 'r').read()
+# def argument() -> None:
+#     argParser = ArgumentParser()
+#     argParser.add_argument("-f", "--file", help="File with message")
+#     argParser.add_argument("-k", "--key", help="Encryption key")
+#     argParser.add_argument("-m", "--mode", help="Encrypt (E) / Decrypt (D)")
+#     args = argParser.parse_args()
+#     print(args)
+#     assert args.key, "Miss the KEY (512 bits) with --key <key>"
+#     KEY = Key(args.key)
+#     assert args.file, "Miss file path with --file <path>"
+#     message = open(args.file, 'r').read()
     
-    mode = 1 if args.mode == 'D' or args.mode == 'Decrypt' else 0
-    if mode == 1:
-        message = [message[i:i+64] for i in range(0, len(message), 64)]
-        for i in len(message):
-            message[i] = Encrypt(KEY, message[i])
-        file = open('res.txt', 'w')
-        file.write('|'.join([i.messege for i in message]))
-    else:
-        message = message.split('|')
-        for i in len(message):
-            message[i] = Decrypt(KEY, message[i])
-        file = open('res.txt', 'w')
-        file.write('|'.join([i.messege for i in message]))
+#     mode = 1 if args.mode == 'D' or args.mode == 'Decrypt' else 0
+#     if mode == 1:
+#         message = [message[i:i+64] for i in range(0, len(message), 64)]
+#         for i in len(message):
+#             message[i] = Encrypt(KEY, message[i])
+#         file = open('res.txt', 'w')
+#         file.write('|'.join([i.messege for i in message]))
+#     else:
+#         message = message.split('|')
+#         for i in len(message):
+#             message[i] = Decrypt(KEY, message[i])
+#         file = open('res.txt', 'w')
+#         file.write('|'.join([i.messege for i in message]))
 
         
 
 
-if __name__ == '__main__':
-    print(argument())
-
-'''
+# if __name__ == '__main__':
+#     print(argument())
