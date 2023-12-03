@@ -331,14 +331,14 @@ class Encrypt:
                 print("\n     J: ", j)
                 key = self.key.deriveKeys(self.key.keys[1][j + i * 16], 3)
                 self.message[i] = self.func.xor(key[0], self.message[i])
-                # for k in range(5):
-                #     print("\n          K: ", k)
-                #     print("\n          Fonction de Chiffrement sans Clef:")
-                #     print("          Fonction numéro: ", self.vecInit[0][j*5 + k + i * 16 * 5])
-                #     print("          Indice dans le vecteur: ", j*5 + k + i * 16 * 5)
-                #     print("          Message à chiffrer: ", self.message[i])
-                #     self.message[i] = self.func.func[self.vecInit[0][j*5 + k + i * 16 * 5]](self.message[i])
-                #     print("          Message chiffré: ", self.message[i])
+                for k in range(5):
+                    print("\n          K: ", k)
+                    print("\n          Fonction de Chiffrement sans Clef:")
+                    print("          Fonction numéro: ", self.vecInit[0][j*5 + k + i * 16 * 5])
+                    print("          Indice dans le vecteur: ", j*5 + k + i * 16 * 5)
+                    print("          Message à chiffrer: ", self.message[i])
+                    self.message[i] = self.func.func[self.vecInit[0][j*5 + k + i * 16 * 5]](self.message[i])
+                    print("          Message chiffré: ", self.message[i])
                 print("\n     Fonction de Chiffrement avec Clef:")
                 print("     Fonction numéro: ", self.vecInit[1][j + i * 16])
                 print("     Indice dans le vecteur: ", j + i * 16)
@@ -422,14 +422,14 @@ class Decrypt:
                 print("     Clef de déchiffrement: ", key[1])
                 self.message[-i] = self.func.funcKeyDecode[self.vecInit[1][-(j + (i-1) * 16)]](self.message[-i], key[1])
                 print("     Résultat déchiffré: ", self.message[-i])
-                # for k in range(1, 6):
-                #     print("\n          K: ", k)
-                #     print("\n          Fonction de déhiffrement sans Clef:")
-                #     print("          Fonction numéro: ", self.vecInit[0][-((j-1)*5 + k + (i-1) * 16 * 5)])
-                #     print("          Indice dans le vecteur: ", -((j-1)*5 + k + (i-1) * 16 * 5), " / ", len(self.vecInit[0])-((j-1)*5 + k + (i-1) * 16 * 5))
-                #     print("          Message à déchiffrer: ", self.message[-i])
-                #     self.message[-i] = self.func.funcDecode[self.vecInit[0][-((j-1)*5 + k + (i-1) * 16 * 5)]](self.message[-i])
-                #     print("          Message déchiffré: ", self.message[-i])
+                for k in range(1, 6):
+                    print("\n          K: ", k)
+                    print("\n          Fonction de déhiffrement sans Clef:")
+                    print("          Fonction numéro: ", self.vecInit[0][-((j-1)*5 + k + (i-1) * 16 * 5)])
+                    print("          Indice dans le vecteur: ", -((j-1)*5 + k + (i-1) * 16 * 5), " / ", len(self.vecInit[0])-((j-1)*5 + k + (i-1) * 16 * 5))
+                    print("          Message à déchiffrer: ", self.message[-i])
+                    self.message[-i] = self.func.funcDecode[self.vecInit[0][-((j-1)*5 + k + (i-1) * 16 * 5)]](self.message[-i])
+                    print("          Message déchiffré: ", self.message[-i])
                 self.message[-i] = self.func.xor(key[0], self.message[-i])
 
 
@@ -465,7 +465,7 @@ class Decrypt:
         
 
 
-toEncrypt = Encrypt("ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff", "0azdad0zazaa")
+toEncrypt = Encrypt("ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff", "0azdad0zaza")
 
 
 
