@@ -23,9 +23,9 @@ class Key:
 class allFunc:
     def __init__(self):
         self.func = {0: self.binary_inversion, 1: self.binary_switch, 2: self.substitute_hex, 3: self.reverseOneTwo, 4: self.reverseString}
-        self.funcKey = {0: self.matriceMelange, 1: self.messageToListToMelange}
+        self.funcKey = {0: self.matriceMelange}
         self.funcDecode = {0: self.binary_inversion, 1: self.binary_switch_decode, 2: self.substitute_hex_decode, 3: self.reverseOneTwo, 4: self.reverseString}
-        self.funcKeyDecode = {0: self.matriceMelange_decode, 1: self.messageToListToMelange_decode}
+        self.funcKeyDecode = {0: self.matriceMelange_decode}
 
     def xor(self, key, msg):
         if len(key) > len(msg):
