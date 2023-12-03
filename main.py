@@ -25,10 +25,10 @@ class Key:
 class allFunc:
     def __init__(self):
         self.func = {0: self.binary_inversion, 1: self.binary_switch, 2: self.substitute_hex, 3: self.reverseOneTwo, 4: self.reverseString}
-        self.funcKey = {0: self.matriceMelange}
+        self.funcKey = {0: self.matriceMelange, 1: self.messageToListToMelange}
         # self.funcKey = {0: self.matriceMelange, 1: self.messageToListToMelange}
         self.funcDecode = {0: self.binary_inversion, 1: self.binary_switch_decode, 2: self.substitute_hex_decode, 3: self.reverseOneTwo, 4: self.reverseString}
-        self.funcKeyDecode = {0: self.matriceMelange_decode}
+        self.funcKeyDecode = {0: self.matriceMelange_decode, 1: self.messageToListToMelange_decode}
         # self.funcKeyDecode = {0: self.matriceMelange_decode, 1: self.messageToListToMelange_decode}
 
     def xor(self, key, msg):
@@ -348,58 +348,38 @@ class Decrypt:
         nbr_block = int(message[2])
         res = [message[3][i:i+int(len(message[3])/nbr_block)] for i in range(0, len(message[3]), int(len(message[3])/nbr_block))]
         self.message = [chaine.lstrip('0') if len(chaine.lstrip('0'))%2 == 0 else "0" + chaine.lstrip('0') for chaine in res]
+
         
-message = "Sed maximum est in aSed Sed maximum estmaxiaximum eestSed maximum est"
-KEY = "ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff"
-
-message = [message[i:i+64] for i in range(0, len(message), 64)]
-result = ""
-for i in range(len(message)):
-    encrypt = Encrypt(KEY, message[i])
-    result += encrypt.message + "|"
-    print("yo")
-result = result[:-1]
-print(result)
-
-# decrypt = Decrypt(KEY, "")
-# print(decrypt.message)
 
 
 
-
-# toEncrypt = Encrypt(KEY, message)
-
-
-
-
-# def argument() -> None:
-#     argParser = ArgumentParser()
-#     argParser.add_argument("-f", "--file", help="File with message")
-#     argParser.add_argument("-k", "--key", help="Encryption key")
-#     argParser.add_argument("-m", "--mode", help="Encrypt (E) / Decrypt (D)")
-#     args = argParser.parse_args()
-#     print(args)
-#     assert args.key, "Miss the KEY (512 bits) with --key <key>"
-#     KEY = Key(args.key)
-#     assert args.file, "Miss file path with --file <path>"
-#     message = open(args.file, 'r').read()
+def argument() -> None:
+    argParser = ArgumentParser()
+    argParser.add_argument("-f", "--file", help="File with message")
+    argParser.add_argument("-k", "--key", help="Encryption key")
+    argParser.add_argument("-m", "--mode", help="Encrypt (E) / Decrypt (D)")
+    args = argParser.parse_args()
+    assert args.key, "Miss the KEY (512 bits) with --key <key>"
+    KEY = args.key
+    assert args.file, "Miss file path with --file <path>"
+    message = open(args.file, 'r', encoding="utf-8").read()
     
-#     mode = 1 if args.mode == 'D' or args.mode == 'Decrypt' else 0
-#     if mode == 1:
-#         message = [message[i:i+64] for i in range(0, len(message), 64)]
-#         for i in len(message):
-#             message[i] = Encrypt(KEY, message[i])
-#         file = open('res.txt', 'w')
-#         file.write('|'.join([i.messege for i in message]))
-#     else:
-#         message = message.split('|')
-#         for i in len(message):
-#             message[i] = Decrypt(KEY, message[i])
-#         file = open('res.txt', 'w')
-#         file.write('|'.join([i.messege for i in message]))
+    mode = 1 if args.mode == 'D' or args.mode == 'Decrypt' else 0
+    if mode == 0:
+        message = [message[i:i+32] for i in range(0, len(message), 32)]
+        for i in range(len(message)):
+            message[i] = Encrypt(KEY, message[i])
+        file = open('chiff.txt', 'w', encoding="utf-8")
+        file.write('|'.join([i.message for i in message]))
+    else:
+        message = message.split('|')
+        for i in range(len(message)):
+            message[i] = Decrypt(KEY, message[i])
+        file = open('dechi.txt', 'w', encoding="utf-8")
+        file.write(''.join([i.message for i in message]))
 
         
 
 
-# if __name__ == '__main__':
-#     print(argument())
+if __name__ == '__main__':
+    argument()
