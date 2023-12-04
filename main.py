@@ -23,9 +23,9 @@ class Key:
 class allFunc:
     def __init__(self):
         self.func = {0: self.binary_inversion, 1: self.binary_switch, 2: self.substitute_hex, 3: self.reverseOneTwo, 4: self.reverseString}
-        self.funcKey = {0: self.matriceMelange, 1: self.messageToListToMelange}
+        self.funcKey = {0: self.matriceMelange}
         self.funcDecode = {0: self.binary_inversion, 1: self.binary_switch_decode, 2: self.substitute_hex_decode, 3: self.reverseOneTwo, 4: self.reverseString}
-        self.funcKeyDecode = {0: self.matriceMelange_decode, 1: self.messageToListToMelange_decode}
+        self.funcKeyDecode = {0: self.matriceMelange_decode}
 
     def xor(self, key, msg):
         if len(key) > len(msg):
@@ -42,7 +42,6 @@ class allFunc:
             res += str(int(a[i]) ^ int(b[i]))
         return self.binToHex(res)
 
-    #Fonction de conversion
     def stringToInt(self, text):
         res = [str(ord(i)).zfill(len(str(max([ord(c) for c in text])))) for i in text]
         return str(len(res[0])) + ''.join(res)
@@ -78,8 +77,6 @@ class allFunc:
     def intToBin(self, number):
         return bin(int(number))[2:]
 
-    #Fonction de chiffrement
-    #sans clef de chiffrement
     def binary_inversion(self, hexa):
         binary = self.hexToBin(hexa)
         res = ''
@@ -128,7 +125,6 @@ class allFunc:
     def reverseString(self, hexa):
         return hexa[::-1]
 
-    #Avec clef de Chiffrement
     def matriceMelange(self, hexa, KEY):
         if len(hexa)%2 != 0: 
             hexa = '0' + hexa
@@ -302,7 +298,6 @@ class Decrypt:
                      self.message[-i] = self.func.funcDecode[self.vecInit[0][-((j-1)*5 + k + (i-1) * 16 * 5)]](self.message[-i])
                 self.message[-i] = self.func.xor(key[0], self.message[-i])
 
-
     def adaptationKey(self, message, key):
         if len(key) == len(message):
             return key
@@ -330,14 +325,12 @@ def argument():
     argParser.add_argument("-k", "--key", help="Encryption key")
     argParser.add_argument("-m", "--mode", help="Encrypt (E) / Decrypt (D)")
     args = argParser.parse_args()
-
-    assert args.file, "Miss file path with --file <path>"
     if args.key:
         KEY = args.key
-        print("\n")
     else:
         KEY = hex(secrets.randbits(512))[2:]
-        print("\nVoicie votre clef de chiffrement, veuillez la concerver en toute discretion: ", KEY)
+        print(KEY)
+    assert args.file, "Miss file path with --file <path>"
     message = open(args.file, 'r', encoding="utf-8").read()
     mode = 1 if str(args.mode).lower() == 'd' or str(args.mode).lower() == 'decrypt' else 0
     if mode == 0:
@@ -345,17 +338,17 @@ def argument():
         message = [message[i:i+256] for i in range(0, len(message), 256)]
         for i in range(len(message)):
             message[i] = Encrypt(KEY, message[i])
-        file = open('crypted.txt', 'w', encoding="utf-8")
+        file = open('chiff.txt', 'w', encoding="utf-8")
         file.write('|'.join([i.message for i in message]))
-        print("Chiffrement éxécuté en", round(time.time()-time1, 2), 'sec\n')
+        print(round(time.time()-time1, 2), 'sec')
     else:
         time1 = time.time()
         message = message.split('|')
         for i in range(len(message)):
             message[i] = Decrypt(KEY, message[i])
-        file = open('decrypted.txt', 'w', encoding="utf-8")
+        file = open('dechi.txt', 'w', encoding="utf-8")
         file.write(''.join([i.message for i in message]))
-        print("Déchiffrement éxécuté en", round(time.time()-time1, 2), 'sec\n')
+        print(round(time.time()-time1, 2), 'sec')
 
 if __name__ == '__main__':
     argument()
