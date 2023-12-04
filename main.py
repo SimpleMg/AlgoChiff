@@ -142,7 +142,7 @@ class allFunc:
     def matriceMelange_decode(self, hexa, KEY):
         if hexa[:2] == "ff": zero = True
         elif hexa[:2] == "ee": zero = False
-        assert hexa[:2] == "ff" or hexa[:2] == "ee", "SALOPE SALOPE"
+        assert hexa[:2] == "ff" or hexa[:2] == "ee", "bad hexa don't start with ee or ff"
         hexaForm = [format(i, '02x') for i in range(256)]
         random.seed(KEY)
         random.shuffle(hexaForm)
