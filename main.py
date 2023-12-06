@@ -18,7 +18,20 @@ class Key:
         master_key_bytes = key.encode('utf-8')
         random.seed(hashlib.sha256(key.encode('utf-8')).hexdigest())
         salt = random.randbytes(256)
-        return [hashlib.sha256(HKDF(algorithm=hashes.SHA256(), length=exit, salt=salt, info=str(i).encode('utf-8'), backend=default_backend()).derive(master_key_bytes).hex().encode('utf-8')).hexdigest() for i in range(numKeys)]
+        derived_keys = [
+            hashlib.sha256(
+                HKDF(
+                    algorithm=hashes.SHA256(),
+                    length=exit,
+                    salt=salt,
+                    info=str(i).encode('utf-8'),
+                    backend=default_backend()
+                ).derive(master_key_bytes)
+            ).hexdigest().encode('utf-8')
+            for i in range(numKeys)
+        ]
+        return derived_keys
+
 
 class allFunc:
     def __init__(self):
@@ -142,7 +155,7 @@ class allFunc:
     def matriceMelange_decode(self, hexa, KEY):
         if hexa[:2] == "ff": zero = True
         elif hexa[:2] == "ee": zero = False
-        assert hexa[:2] == "ff" or hexa[:2] == "ee", "bad hexa don't start with ee or ff"
+        assert hexa[:2] == "ff" or hexa[:2] == "ee"
         hexaForm = [format(i, '02x') for i in range(256)]
         random.seed(KEY)
         random.shuffle(hexaForm)
@@ -173,8 +186,9 @@ class allFunc:
         return ''.join(res)
 
 class Encrypt:
-    def __init__(self, KEY, message):
+    def __init__(self, KEY, message, comp=[2, 2, 2]):
         self.key = Key(KEY)
+        self.complex = comp
         self.func = allFunc()
         self.message = message
         self.splitMessage(True)
@@ -210,27 +224,27 @@ class Encrypt:
 
     def initialisationVector(self):
         self.vecInit = []
-        self.vecInit.append([secrets.randbelow(len(self.func.func)) for i in range((5*16) * len(self.message))])
-        self.vecInit.append([secrets.randbelow(len(self.func.funcKey)) for i in range(16 * len(self.message))])
+        self.vecInit.append([secrets.randbelow(len(self.func.func)) for i in range((self.complex[2]*self.complex[1]) * len(self.message))])
+        self.vecInit.append([secrets.randbelow(len(self.func.funcKey)) for i in range(self.complex[1] * len(self.message))])
 
     def layer(self, layer):
-        self.key.keys[layer] = self.key.deriveKeys(self.key.keyBase[layer], 5 * len(self.message))
+        self.key.keys[layer] = self.key.deriveKeys(self.key.keyBase[layer], self.complex[0] * len(self.message))
         for i in range(len(self.message)):
-            for j in range(5):
-                key = self.key.deriveKeys(self.key.keys[layer][j + i * 5], 3)
+            for j in range(self.complex[0]):
+                key = self.key.deriveKeys(self.key.keys[layer][j + i * self.complex[0]], 3)
                 self.message[i] = self.func.xor(key[0], self.message[i])
                 self.message[i] = self.func.funcKey[j%len(self.func.funcKey)](self.message[i], key[1])
                 self.message[i] = self.func.xor(key[2], self.message[i])
 
     def mainLoop(self):
-        self.key.keys[1] = self.key.deriveKeys(self.key.keyBase[1], 16 * len(self.message))
+        self.key.keys[1] = self.key.deriveKeys(self.key.keyBase[1], self.complex[1] * len(self.message))
         for i in range(len(self.message)):
-            for j in range(16):
-                key = self.key.deriveKeys(self.key.keys[1][j + i * 16], 3)
+            for j in range(self.complex[1]):
+                key = self.key.deriveKeys(self.key.keys[1][j + i * self.complex[1]], 3)
                 self.message[i] = self.func.xor(key[0], self.message[i])
-                for k in range(5):
-                    self.message[i] = self.func.func[self.vecInit[0][j*5 + k + i * 16 * 5]](self.message[i])
-                self.message[i] = self.func.funcKey[self.vecInit[1][j + i * 16]](self.message[i], key[1])
+                for k in range(self.complex[2]):
+                    self.message[i] = self.func.func[self.vecInit[0][j*self.complex[2] + k + i * self.complex[1] * self.complex[2]]](self.message[i])
+                self.message[i] = self.func.funcKey[self.vecInit[1][j + i * self.complex[1]]](self.message[i], key[1])
                 self.message[i] = self.func.xor(key[2], self.message[i])
     
     def adaptationKey(self, message, key):
@@ -253,9 +267,10 @@ class Encrypt:
         self.message =  concat if not vector else vec + str(len(self.func.func)) + concat
 
 class Decrypt:
-    def __init__(self, KEY, message):
+    def __init__(self, KEY, message, comp=[2, 2, 2]):
         self.key = Key(KEY)
         self.func = allFunc()
+        self.complex = comp
         self.message = message
         self.initialisationKeys()
         self.concatenationMessageReverse()
@@ -279,23 +294,23 @@ class Decrypt:
         self.key.keys[3] = self.key.deriveKeys(self.key.keyBase[3], 2)
     
     def layer(self, layer):
-        self.key.keys[layer] = self.key.deriveKeys(self.key.keyBase[layer], 5 * len(self.message))
+        self.key.keys[layer] = self.key.deriveKeys(self.key.keyBase[layer], self.complex[0] * len(self.message))
         for i in range(1, len(self.message) + 1):
-            for j in range(1, 6):
-                key = self.key.deriveKeys(self.key.keys[layer][-(j + (i - 1) * 5)], 3)
+            for j in range(1, self.complex[0]+1):
+                key = self.key.deriveKeys(self.key.keys[layer][-(j + (i - 1) * self.complex[0])], 3)
                 self.message[-i] = self.func.xor(key[2], self.message[-i])
                 self.message[-i] = self.func.funcKeyDecode[(j-1)%len(self.func.funcKeyDecode)](self.message[-i] , key[1])
                 self.message[-i] = self.func.xor(key[0], self.message[-i])
     
     def mainLoop(self):
-        self.key.keys[1] = self.key.deriveKeys(self.key.keyBase[1], 16 * len(self.message))
+        self.key.keys[1] = self.key.deriveKeys(self.key.keyBase[1], self.complex[1] * len(self.message))
         for i in range(1, len(self.message)+1):
-            for j in range(1, 17):
-                key = self.key.deriveKeys(self.key.keys[1][-(j + (i - 1) * 16)], 3)
+            for j in range(1, self.complex[1]+1):
+                key = self.key.deriveKeys(self.key.keys[1][-(j + (i - 1) * self.complex[1])], 3)
                 self.message[-i] = self.func.xor(key[2], self.message[-i])
-                self.message[-i] = self.func.funcKeyDecode[self.vecInit[1][-(j + (i-1) * 16)]](self.message[-i], key[1])
-                for k in range(1, 6):
-                     self.message[-i] = self.func.funcDecode[self.vecInit[0][-((j-1)*5 + k + (i-1) * 16 * 5)]](self.message[-i])
+                self.message[-i] = self.func.funcKeyDecode[self.vecInit[1][-(j + (i-1) * self.complex[1])]](self.message[-i], key[1])
+                for k in range(1, self.complex[2]+1):
+                     self.message[-i] = self.func.funcDecode[self.vecInit[0][-((j-1)*self.complex[2] + k + (i-1) * self.complex[1] * self.complex[2])]](self.message[-i])
                 self.message[-i] = self.func.xor(key[0], self.message[-i])
 
     def adaptationKey(self, message, key):
@@ -320,6 +335,7 @@ class Decrypt:
         self.message = messageLst
 
 def argument():
+    comp = [2, 2, 2]
     argParser = ArgumentParser()
     argParser.add_argument("-f", "--file", help="File with message")
     argParser.add_argument("-k", "--key", help="Encryption key")
@@ -335,9 +351,9 @@ def argument():
     mode = 1 if str(args.mode).lower() == 'd' or str(args.mode).lower() == 'decrypt' else 0
     if mode == 0:
         time1 = time.time()
-        message = [message[i:i+256] for i in range(0, len(message), 256)]
+        message = [message[i:i+128] for i in range(0, len(message), 128)]
         for i in range(len(message)):
-            message[i] = Encrypt(KEY, message[i])
+            message[i] = Encrypt(KEY, message[i], comp)
         file = open('chiff.txt', 'w', encoding="utf-8")
         file.write('|'.join([i.message for i in message]))
         print(round(time.time()-time1, 2), 'sec')
@@ -345,7 +361,7 @@ def argument():
         time1 = time.time()
         message = message.split('|')
         for i in range(len(message)):
-            message[i] = Decrypt(KEY, message[i])
+            message[i] = Decrypt(KEY, message[i], comp)
         file = open('dechi.txt', 'w', encoding="utf-8")
         file.write(''.join([i.message for i in message]))
         print(round(time.time()-time1, 2), 'sec')
